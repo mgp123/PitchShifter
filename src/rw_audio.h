@@ -9,6 +9,7 @@
 // https://stackoverflow.com/questions/35856499/how-to-read-an-audio-file-in-an-array-format-from-libsndfile-library-like-matlab
 SNDFILE* audio_in;
 SF_INFO audio_in_info;
+
 SNDFILE* audio_out;
 SF_INFO audio_out_info;
 
@@ -22,5 +23,4 @@ float* read_wav(char* path);
 void save_wav(char* name, float* audio);
 
 
-// Efecto de demo
-void efecto_phaser(float* ptr);
+

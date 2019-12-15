@@ -1,4 +1,5 @@
 #include "fft.h"
+#include <stdio.h>
 
 complejo* complejizar(float* r, unsigned int size) {
 	complejo* res =  malloc(size*sizeof(complejo));
@@ -150,6 +151,7 @@ float* convolucion(float* audio, unsigned int size1, float* IR, unsigned int siz
 	complejo* temp = calloc(len, sizeof(complejo));
 
 	// F(audio)
+	printf("%s\n","Realizando fft" );
 	complejizar_buff(IR,size2,temp);
 	ditfft2_buff(temp,len,fftIR);
 
@@ -157,12 +159,15 @@ float* convolucion(float* audio, unsigned int size1, float* IR, unsigned int siz
 	complejizar_buff(audio,size1,temp);
 	ditfft2_buff(temp,len,fftAudio);
 
+	printf("%s\n","Realizando multiplicaciones complejas" );
+
 	// temp =  F(audio) * F(IR)
 	for (int i = 0; i < len; ++i)
 	{
 		temp[i].real = fftAudio[i].real*fftIR[i].real - fftAudio[i].imaginaria*fftIR[i].imaginaria;
 		temp[i].imaginaria = fftAudio[i].real*fftIR[i].imaginaria + fftAudio[i].imaginaria*fftIR[i].real;
 	}
+	printf("%s\n","Realizando ifft" );
 
 	// res = F-1(temp). Se reusan buffers
 	float* res = (float*) temp;

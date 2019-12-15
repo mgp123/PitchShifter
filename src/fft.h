@@ -34,7 +34,7 @@ complejo* ditfft2(complejo* c, unsigned int size);
 void ditfft2_buff(complejo* c, unsigned int size, complejo* buffer);
 void ditfft2_buff_aux(complejo* c, unsigned int size,unsigned int hop, complejo* buffer);
 
-// inversa de transformada de fourier. No anda todavia
+// inversa de transformada de fourier.
 complejo* iditfft2(complejo* c, unsigned int size);
 void iditfft2_buff(complejo* c, unsigned int size, complejo* buffer);
 void iditfft2_buff_aux(complejo* c, unsigned int size,unsigned int hop, complejo* buffer);
