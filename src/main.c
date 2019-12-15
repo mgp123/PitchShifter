@@ -21,13 +21,30 @@ int main(int argc, char *argv[])
 	{
 		printf("Real: %f. Imaginaria: %f\n",transform[i].real, transform[i].imaginaria);
 	}
-	
 
+	iditfft2_buff(transform,8,c);
+	printf("%s\n", "Luego de ifft");
+	for (int i = 0; i < 8; ++i)
+	{
+		printf("Real: %f. Imaginaria: %f\n",c[i].real, c[i].imaginaria);
+	}
+	
 	/*
 	float* ptr;
 	ptr = read_wav(argv[1]);
 	efecto_phaser(ptr);
 	free(ptr);
 	*/
+
+	float ir[3] = {1,2,3};
+	float* conv = convolucion(numeros,8,ir,3);
+	for (int i = 0; i < 8; ++i)
+	{
+		printf("Convolucion : %f\n",conv[i]);
+	}
+
+	free(conv);
+
+	
 	return 0;
 }
