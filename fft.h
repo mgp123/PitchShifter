@@ -29,7 +29,7 @@ unsigned int siguiente_potencia(unsigned int x);
 // transformada de Fourier probando Cooley–Tukey FFT algorithm segun 
 // el algoritmo en https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Pseudocode.
 // supone que size son potencias de 2.
-// no anda todavia
+// lo que devuelve esta en el heap asi que hay que utilizar free cuando se termine de usar
 complejo* ditfft2(complejo* c, unsigned int size);
 void ditfft2_buff(complejo* c, unsigned int size, complejo* buffer);
 void ditfft2_buff_aux(complejo* c, unsigned int size,unsigned int hop, complejo* buffer);

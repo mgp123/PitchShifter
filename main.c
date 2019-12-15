@@ -3,20 +3,23 @@
 
 int main(int argc, char *argv[])
 {
-	float numeros[5] = {1,2,3,4,5};
-	complejo c[5];
-	float numeros2[5];
-	complejizar_buff(numeros,5,c);
-	parte_real_buff(c,5,numeros2);
-	for (int i = 0; i < 5; ++i)
+	float numeros[8] = {1,2,3,4,5,6,7,8};
+	complejo c[8];
+	complejo transform[8];
+	complejizar_buff(numeros,8,c);
+
+	printf("%s\n", "Previo fft");
+	for (int i = 0; i < 8; ++i)
 	{
 		printf("Real: %f. Imaginaria: %f\n",c[i].real, c[i].imaginaria);
-		printf("Parte real %f\n",numeros2[i]);
 	}
 
-	for (unsigned int x = 1; x < 64*2; ++x)
+	ditfft2_buff(c,8,transform);
+
+	printf("%s\n", "Luego de fft");
+	for (int i = 0; i < 8; ++i)
 	{
-		printf("x = %d. La menor potencia mayor es %d\n",x, siguiente_potencia(x));	
+		printf("Real: %f. Imaginaria: %f\n",transform[i].real, transform[i].imaginaria);
 	}
 	
 
