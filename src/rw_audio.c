@@ -24,3 +24,11 @@ void save_wav(char* name, float* audio) {
 	sf_write_float(audio_out, audio, size);
 	sf_close(audio_out);
 }
+
+
+void save_wav_len(char* name, float* audio, unsigned int size) {
+	audio_out_info = audio_in_info;
+	audio_out = sf_open(name, SFM_WRITE, &audio_out_info);
+	sf_write_float(audio_out, audio, size);
+	sf_close(audio_out);
+}

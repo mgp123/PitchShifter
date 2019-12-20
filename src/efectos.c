@@ -44,16 +44,15 @@ float* stretch(float* audio, unsigned int size, float f, unsigned int window_siz
 	float phase[window_size];
 	float hanning[window_size];
 	unsigned int nuevo_largo = size/f + window_size;
-	float* output = calloc(nuevo_largo, sizeof(complejo));
+	float* output = calloc(nuevo_largo, sizeof(float));
 
 	for (int i = 0; i < window_size; ++i)
 	{
 		phase[i] = 0;
-		hanning[i] = (float) cos((M_PI*i)/window_size);
+		hanning[i] = (float) sin((M_PI*i)/(window_size-1));
 		hanning[i] *= hanning[i];
 	}
 
-	printf("%s\n","Vivo1" );
 	for (unsigned int i = 0; i < size - window_size - hop; i+=f*hop)
 	{
 		float a1[window_size];
@@ -100,7 +99,7 @@ float* stretch(float* audio, unsigned int size, float f, unsigned int window_siz
 		}
 	}
 
-	save_wav("stretched.wav",output);
+	save_wav("stretched.wav",output,nuevo_largo);
 	free(output);
 
 	return NULL;

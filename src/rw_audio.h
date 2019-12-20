@@ -22,5 +22,6 @@ float* read_wav(char* path);
 // Actualmente usa la configuracion (frames per second, channels, etc..) de audio_in_info.
 void save_wav(char* name, float* audio);
 
+void save_wav_len(char* name, float* audio, unsigned int size);
 
 
