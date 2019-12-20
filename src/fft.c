@@ -55,6 +55,7 @@ complejo* ditfft2(complejo* c, unsigned int size){
 void ditfft2_buff(complejo* c, unsigned int size, complejo* buffer){
 	ditfft2_buff_aux(c,size,1,buffer);
 }
+// se puede pasar un arreglo de numeros reales y se genera el complejo en el caso base
 void ditfft2_buff_aux(complejo* c, unsigned int size, unsigned int hop, complejo* buffer) {
 	if (size == 1)
 	{
