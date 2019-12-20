@@ -45,25 +45,19 @@ unsigned int siguiente_potencia(unsigned int x){
 }
 
 
-complejo* ditfft2(complejo* c, unsigned int size){
-	complejo* res = malloc(size*sizeof(complejo));
-	ditfft2_buff(c,size,res);
-	return res;
-
-}
-
-void ditfft2_buff(complejo* c, unsigned int size, complejo* buffer){
-	ditfft2_buff_aux(c,size,1,buffer);
+void ditfft2(float* c, unsigned int size, complejo* buffer){
+	ditfft2_aux(c,size,1,buffer);
 }
 // se puede pasar un arreglo de numeros reales y se genera el complejo en el caso base
-void ditfft2_buff_aux(complejo* c, unsigned int size, unsigned int hop, complejo* buffer) {
+void ditfft2_aux(float* c, unsigned int size, unsigned int hop, complejo* buffer) {
 	if (size == 1)
 	{
-		buffer[0] = c[0];
+		buffer[0].real = c[0];
+		buffer[0].imaginaria = 0; 
 	}
 	else {
-		ditfft2_buff_aux(c,size>>1,hop<<1,buffer);
-		ditfft2_buff_aux(&c[hop],size>>1,hop<<1,&buffer[size>>1]);
+		ditfft2_aux(c,size>>1,hop<<1,buffer);
+		ditfft2_aux(&c[hop],size>>1,hop<<1,&buffer[size>>1]);
 
 		for (int i = 0; i < size/2; ++i)
 		{
@@ -92,16 +86,14 @@ void ditfft2_buff_aux(complejo* c, unsigned int size, unsigned int hop, complejo
 	}
 }
 
-
-complejo* iditfft2(complejo* c, unsigned int size){
-	complejo* res = malloc(size*sizeof(complejo));
-	iditfft2_buff(c,size,res);
-	return res;
-
+void ditfft2_stereo(float* c, unsigned int size, complejo* buffer){
+	ditfft2_aux(c,size>>1,2,buffer);
+	ditfft2_aux(&c[1],size>>1,2,&buffer[size>>1]);
 }
 
-void iditfft2_buff(complejo* c, unsigned int size, complejo* buffer){
-	iditfft2_buff_aux(c,size,1,buffer);
+
+void iditfft2(complejo* c, unsigned int size, complejo* buffer){
+	iditfft2_aux(c,size,1,buffer);
 	for (int i = 0; i < size; ++i)
 	{
 		buffer[i].real /= (float) size;
@@ -110,14 +102,14 @@ void iditfft2_buff(complejo* c, unsigned int size, complejo* buffer){
 	}
 }
 
-void iditfft2_buff_aux(complejo* c, unsigned int size, unsigned int hop, complejo* buffer) {
+void iditfft2_aux(complejo* c, unsigned int size, unsigned int hop, complejo* buffer) {
 	if (size == 1)
 	{
 		buffer[0] = c[0];
 	}
 	else {
-		iditfft2_buff_aux(c,size>>1,hop<<1,buffer);
-		iditfft2_buff_aux(&c[hop],size>>1,hop<<1,&buffer[size>>1]);
+		iditfft2_aux(c,size>>1,hop<<1,buffer);
+		iditfft2_aux(&c[hop],size>>1,hop<<1,&buffer[size>>1]);
 
 		for (int i = 0; i < size/2; ++i)
 		{
@@ -146,6 +138,8 @@ void iditfft2_buff_aux(complejo* c, unsigned int size, unsigned int hop, complej
 }
 
 float* convolucion(float* audio, unsigned int size1, float* IR, unsigned int size2) {
+	/*
+
 	unsigned int len = siguiente_potencia(size1);
 
 	complejo* fftAudio = calloc(len,  sizeof(complejo));
@@ -155,11 +149,11 @@ float* convolucion(float* audio, unsigned int size1, float* IR, unsigned int siz
 	// F(audio)
 	printf("%s\n","Realizando fft" );
 	complejizar_buff(IR,size2,temp);
-	ditfft2_buff(temp,len,fftIR);
+	ditfft2(temp,len,fftIR);
 
 	// F(IR)
 	complejizar_buff(audio,size1,temp);
-	ditfft2_buff(temp,len,fftAudio);
+	ditfft2(temp,len,fftAudio);
 
 	printf("%s\n","Realizando multiplicaciones complejas" );
 
@@ -173,12 +167,13 @@ float* convolucion(float* audio, unsigned int size1, float* IR, unsigned int siz
 
 	// res = F-1(temp). Se reusan buffers
 	float* res = (float*) temp;
-	iditfft2_buff(temp,len,fftAudio);
+	iditfft2(temp,len,fftAudio);
 	parte_real_buff(fftAudio,len,res);
 	free(fftAudio);
 	free(fftIR);
+	*/
 
-	return res;
+	return NULL;
 }
 
 

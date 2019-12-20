@@ -30,14 +30,16 @@ unsigned int siguiente_potencia(unsigned int x);
 // el algoritmo en https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Pseudocode.
 // supone que size son potencias de 2.
 // lo que devuelve esta en el heap asi que hay que utilizar free cuando se termine de usar
-complejo* ditfft2(complejo* c, unsigned int size);
-void ditfft2_buff(complejo* c, unsigned int size, complejo* buffer);
-void ditfft2_buff_aux(complejo* c, unsigned int size,unsigned int hop, complejo* buffer);
+void ditfft2(float* c, unsigned int size, complejo* buffer);
+void ditfft2_aux(float* c, unsigned int size,unsigned int hop, complejo* buffer);
+
+// toma un arreglo que representa el audio en estereo. es decir pares de floats. 
+// devuelve la transformada de cada canal por separado, primero todo el canal 1 y luego todo el canal 2
+void ditfft2_stereo(float* c, unsigned int size, complejo* buffer);
 
 // inversa de transformada de fourier.
-complejo* iditfft2(complejo* c, unsigned int size);
-void iditfft2_buff(complejo* c, unsigned int size, complejo* buffer);
-void iditfft2_buff_aux(complejo* c, unsigned int size,unsigned int hop, complejo* buffer);
+void iditfft2(complejo* c, unsigned int size, complejo* buffer);
+void iditfft2_aux(complejo* c, unsigned int size,unsigned int hop, complejo* buffer);
 
 // convolucion de audio con IR. La salida tiene tamaño de audio. 
 // supone size1 >= size2

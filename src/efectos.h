@@ -8,3 +8,6 @@ void efecto_phaser(float* ptr);
 // supone MONO y que ambos audios tienen el mismo samplerate
 // no anda todavia
 void efecto_convolucion(float* audio, float* IR, unsigned int IR_size);
+
+// devuelve en el heap
+float* stretch(float* audio, unsigned int size, float f, unsigned int window_size, unsigned int hop);
