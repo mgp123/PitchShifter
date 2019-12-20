@@ -71,6 +71,7 @@ void ditfft2_buff_aux(complejo* c, unsigned int size, unsigned int hop, complejo
 
 			// rotacion podria/deberia tenerse precalculado en lugar de 
 			// hacerlo de esta forma.
+			// Puede usarse un arreglo directamente con todas los elemntos y acceder como queramos. Usando un archivo de precalculados.
 			complejo rotacion;
 			rotacion.real =  cos(-2*M_PI*frac);
 			rotacion.imaginaria = sin(-2*M_PI*frac);
