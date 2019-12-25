@@ -122,6 +122,8 @@ void iditfft2_aux(complejo* c, unsigned int size, unsigned int hop, complejo* bu
 			rotacion.real =  cos(2*M_PI*frac);
 			rotacion.imaginaria = sin(2*M_PI*frac);
 
+
+
 			complejo t = buffer[i];
 
 			complejo c_ref;
@@ -133,6 +135,7 @@ void iditfft2_aux(complejo* c, unsigned int size, unsigned int hop, complejo* bu
 
 			buffer[i+size/2].real = t.real - c_ref.real;
 			buffer[i+size/2].imaginaria = t.imaginaria - c_ref.imaginaria;
+
 		}
 	}
 }

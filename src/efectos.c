@@ -49,6 +49,7 @@ float* stretch(float* audio, unsigned int size, float f, unsigned int window_siz
 	for (int i = 0; i < window_size; ++i)
 	{
 		phase[i] = 0;
+
 		hanning[i] = (float) sin((M_PI*i)/(window_size-1));
 		hanning[i] *= hanning[i];
 	}
@@ -71,35 +72,40 @@ float* stretch(float* audio, unsigned int size, float f, unsigned int window_siz
 
 		for (int j = 0; j < window_size; ++j)
 		{
-			float normas1sq = s1[j].real*s1[j].real + s1[j].imaginaria*s1[j].imaginaria;
+
+			float normas2 = sqrt(s2[j].real*s2[j].real + s2[j].imaginaria*s2[j].imaginaria);
 
 			complejo frac;
-			frac.real = (s1[j].real*s2[j].real + s1[j].imaginaria*s2[j].imaginaria)/normas1sq;
-			frac.imaginaria = (s1[j].real*s2[j].imaginaria - s1[j].imaginaria*s2[j].real)/normas1sq;
+			frac.real = (s1[j].real*s2[j].real + s1[j].imaginaria*s2[j].imaginaria);
+			frac.imaginaria = (s1[j].real*s2[j].imaginaria - s1[j].imaginaria*s2[j].real);
 
-			float angulo = (float) atan2((double) frac.imaginaria, (double) frac.real);
+			float v_angular = (float) atan2((double) frac.imaginaria, (double) frac.real);
 
-			phase[j] += angulo;
-			//if (phase[j] > M_PI) {phase[j] -= M_PI;}
-			//else if(phase[j] < - M_PI) {phase[j] += M_PI;}
-		
-			float norma = (float) sqrt(s2[j].real*s2[j].real + s2[j].imaginaria*s2[j].imaginaria);
+			phase[j] += v_angular/f;
+			if (phase[j] > M_PI) {phase[j] -= 2*M_PI;}
+			else if(phase[j] < - M_PI) {phase[j] += 2*M_PI;}
+
 			complejo rephased;
-			rephased.real = cos(phase[j])*norma;
-			rephased.imaginaria = sin(phase[j])*norma;
+			rephased.real = cos(phase[j])*normas2;
+			rephased.imaginaria = sin(phase[j])*normas2;
 			s2[j] = rephased;
+
+
+			s1[j].real = 0;
+			s1[j].imaginaria = 0;
+
 		}
 
 		iditfft2(s2,window_size,s1);
 
 		for (int j = 0; j < window_size; ++j)
 		{
-			unsigned int inicio = i/f;
+			unsigned int inicio = (unsigned int) (i/f);
 			output[inicio+j] += s1[j].real*hanning[j];
 		}
 	}
 
-	save_wav("stretched.wav",output,nuevo_largo);
+	save_wav_len("stretched.wav",output,nuevo_largo);
 	free(output);
 
 	return NULL;
