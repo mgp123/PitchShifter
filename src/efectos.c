@@ -105,10 +105,38 @@ float* stretch(float* audio, unsigned int size, float f, unsigned int window_siz
 		}
 	}
 
-	save_wav_len("stretched.wav",output,nuevo_largo);
+	/*save_wav_len("stretched.wav",output,nuevo_largo);
+	free(output);*/
+	return output;
+}
+
+
+float* resample(float* audio, unsigned int size, float f) {
+	unsigned int nuevo_largo = size/f;
+	float* output = malloc(nuevo_largo*sizeof(float));
+
+	for (int i = 0; i < nuevo_largo; ++i)
+	{
+		float x = floor(i*f);
+		unsigned int a = x;
+		unsigned int b = x+1;
+		output[i] = audio[a] + (audio[b]- audio[a]) * (b-x);
+	}
+	return output;
+}
+
+
+void efecto_repitch(float* audio, unsigned int size, float f) {
+	float*  temp;  
+	float* output;
+
+	float resample_coef = f;
+
+	temp = stretch(audio, audio_in_info.frames, 1./resample_coef, 512,512/2);
+	output = resample(temp, (unsigned int)  audio_in_info.frames*resample_coef,  resample_coef);
+
+	save_wav_len("repitch.wav",output,audio_in_info.frames);
+
+	free(temp);
 	free(output);
-
-	return NULL;
-
-
 }

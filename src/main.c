@@ -3,12 +3,14 @@
 
 int main(int argc, char *argv[])
 {	
-
-	
-	float* audio;  
+	float* audio;
 	audio = read_wav(argv[1]);
-	stretch(audio, audio_in_info.frames,  0.75, 512, (512/2));
+
+	float resample_coef = 1.10;
+	efecto_repitch(audio, audio_in_info.frames,resample_coef);
 	free(audio);
+
+
 
 	return 0;
 }
