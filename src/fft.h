@@ -54,7 +54,8 @@ void precalcular_rotaciones();
 complejo rotaciones[PRECALCULADOS];
 
 
-// fft en simd. Usa un arreglo precalculado de rotaciones por lo que debe llamarse a la 
+// fft y ifft en simd. Usa un arreglo precalculado de rotaciones por lo que debe llamarse a la 
 // funcion precalcular_rotaciones antes de la primer llamada a esta funcion
 // requiere que size sea potencia de 2 y size <= PRECALCULADOS*2
 extern void ditfft2_asm(float* c, unsigned int size, complejo* buffer);
+extern void iditfft2_asm(complejo* c, unsigned int size, complejo* buffer);

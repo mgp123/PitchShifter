@@ -120,7 +120,7 @@ float* resample(float* audio, unsigned int size, float f) {
 		float x = floor(i*f);
 		unsigned int a = x;
 		unsigned int b = x+1;
-		output[i] = audio[a] + (audio[b]- audio[a]) * (b-x);
+		output[i] = audio[a] + (audio[b]- audio[a]) * (x-a);
 	}
 	return output;
 }
