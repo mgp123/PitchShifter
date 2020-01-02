@@ -179,4 +179,11 @@ float* convolucion(float* audio, unsigned int size1, float* IR, unsigned int siz
 	return NULL;
 }
 
+void precalcular_rotaciones() {
+	for (int i = 0; i < PRECALCULADOS; ++i)
+	{	
+		rotaciones[i].real =  cos(-M_PI*i/PRECALCULADOS);
+		rotaciones[i].imaginaria = sin(-M_PI*i/PRECALCULADOS);
+	}
+}
 

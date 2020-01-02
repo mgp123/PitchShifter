@@ -1,9 +1,7 @@
 section.data:
-numeros: times 1024 dq 0  
-rotacion1: db 0
-rotacion2: db 0
+extern rotaciones
 
-%define precalculados numeros
+%define precalculados rotaciones
 
 
 section.text:
@@ -21,7 +19,7 @@ ditfft2_asm:
 	ret
 
 ditfft2_aux_asm:
-	cmp rcx, 2
+	cmp rsi, 2
 	je .2elementos
 
 	push r12
@@ -71,7 +69,7 @@ ditfft2_aux_asm:
 	mov rsi, 8 ; un complejo son 8 bytes
 	shl rsi, cl
 	%define espaciado rsi
-	mov rsi, precalculados
+	mov rdi, precalculados
 	%define rotacion_actual rdi
 
 
@@ -132,26 +130,26 @@ ditfft2_aux_asm:
 	add rax, 2
 	jmp .ciclo
 
-
-	.2elementos:
-	movss xmm0, [ARREGLO] ; xmm0 =  Arr 0
-	mov rdx, HOP
-	shl rdx, 2
-	add rdx, ARREGLO   ; xmm1 = Arr 1
-	movss xmm1, [rdx]
-
-	movss xmm2, xmm0
-	addss xmm2, xmm0
-	movsd xmm0, [BUFFER]
-	subss xmm0, xmm1
-	movsd xmm0, [BUFFER + 8]
-
 	.fin:
 	pop r15
 	pop r14
 	pop r13
 	pop r12
 	ret
+
+	.2elementos:
+	movss xmm0, [rdi] ; xmm0 =  Arr 0
+	shl rdx, 2
+	add rdx, rdi   ; xmm1 = Arr 1
+	movss xmm1, [rdx]
+
+	movdqa xmm2, xmm0
+	addss xmm2, xmm1
+	movsd [rcx], xmm2 
+	subss xmm0, xmm1
+	movsd [rcx + 8], xmm0
+	ret
+
 
 
 

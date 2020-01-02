@@ -1,6 +1,8 @@
 #include <stdlib.h> 
 #include <math.h>
 
+#define PRECALCULADOS 1024
+
 struct Complejo
 {
     float real;
@@ -45,3 +47,14 @@ void iditfft2_aux(complejo* c, unsigned int size,unsigned int hop, complejo* buf
 // supone size1 >= size2
 // lo que devuelve esta en el heap asi que hay que utilizar free cuando se termine de usar
 float* convolucion(float* audio, unsigned int size1, float* IR, unsigned int size2);
+
+// rotaciones a usar por fft
+// las rotaciones van de 0 a -pi avanzado de a -1/precalculados
+void precalcular_rotaciones();
+complejo rotaciones[PRECALCULADOS];
+
+
+// fft en simd. Usa un arreglo precalculado de rotaciones por lo que debe llamarse a la 
+// funcion precalcular_rotaciones antes de la primer llamada a esta funcion
+// requiere que size sea potencia de 2 y size <= PRECALCULADOS*2
+extern void ditfft2_asm(float* c, unsigned int size, complejo* buffer);
