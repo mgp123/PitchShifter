@@ -114,13 +114,19 @@ float* stretch(float* audio, unsigned int size, float f, unsigned int window_siz
 float* resample(float* audio, unsigned int size, float f) {
 	unsigned int nuevo_largo = size/f;
 	float* output = malloc(nuevo_largo*sizeof(float));
+	f = (size-1)*1.0/(1.0*nuevo_largo-1.0);
+
+	printf("%f\n",f );
 
 	for (int i = 0; i < nuevo_largo; ++i)
 	{
 		float x = floor(i*f);
 		unsigned int a = x;
 		unsigned int b = x+1;
-		output[i] = audio[a] + (audio[b]- audio[a]) * (x-a);
+		x = i*f;
+
+		float fa = (float ) a;
+		output[i] = audio[a] + (audio[b]- audio[a]) * (x-fa);
 	}
 	return output;
 }

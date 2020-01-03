@@ -18,6 +18,8 @@ float* stretch(float* audio, unsigned int size, float f, unsigned int window_siz
 // devuelve en el heap
 float* resample(float* audio, unsigned int size, float f);
 
+extern float* resample_asm(float* audio, int size, float f);
+
 
 // genera el audio con el efecto de repitch multiplicando las frecuencias por f.
 // utiliza strech y resample
