@@ -46,7 +46,31 @@ unsigned int siguiente_potencia(unsigned int x){
 
 
 void ditfft2(float* c, unsigned int size, complejo* buffer){
+	for (int i = 0; i < size; ++i)
+	{
+		if(c[i] != c[i]) {
+			for (int k = 0; k < size; ++k)
+				{
+					printf("%f\n",c[k]);
+				}
+
+			printf("si, es el input\n");	
+			exit(-1);
+		}
+	}
+
 	ditfft2_aux(c,size,1,buffer);
+
+	for (int i = 0; i < size; ++i)
+	{
+		if(buffer[i].real != buffer[i].real) {
+			for (int k = 0; k < size; ++k)
+				{
+					printf("%f\n",c[k]);
+				}	
+			exit(-1);
+		}
+	}
 }
 // se puede pasar un arreglo de numeros reales y se genera el complejo en el caso base
 void ditfft2_aux(float* c, unsigned int size, unsigned int hop, complejo* buffer) {
@@ -71,7 +95,10 @@ void ditfft2_aux(float* c, unsigned int size, unsigned int hop, complejo* buffer
 			rotacion.real =  cos(-2*M_PI*frac);
 			rotacion.imaginaria = sin(-2*M_PI*frac);
 
+
+
 			complejo t = buffer[i];
+
 
 			complejo c_ref;
 			c_ref.real = buffer[i+size/2].real*rotacion.real - buffer[i+size/2].imaginaria*rotacion.imaginaria;
@@ -140,44 +167,77 @@ void iditfft2_aux(complejo* c, unsigned int size, unsigned int hop, complejo* bu
 	}
 }
 
-float* convolucion(float* audio, unsigned int size1, float* IR, unsigned int size2) {
-	/*
-
-	unsigned int len = siguiente_potencia(size1);
-
-	complejo* fftAudio = calloc(len,  sizeof(complejo));
-	complejo* fftIR = calloc(len, sizeof(complejo));
-	complejo* temp = calloc(len, sizeof(complejo));
-
-	// F(audio)
-	printf("%s\n","Realizando fft" );
-	complejizar_buff(IR,size2,temp);
-	ditfft2(temp,len,fftIR);
-
-	// F(IR)
-	complejizar_buff(audio,size1,temp);
-	ditfft2(temp,len,fftAudio);
-
-	printf("%s\n","Realizando multiplicaciones complejas" );
-
-	// temp =  F(audio) * F(IR)
-	for (int i = 0; i < len; ++i)
+void convolucion_circular(complejo* c1, complejo* c2, unsigned int size, complejo* buffer) {
+	complejo producto[size];
+	for (int i = 0; i < size; ++i)
 	{
-		temp[i].real = fftAudio[i].real*fftIR[i].real - fftAudio[i].imaginaria*fftIR[i].imaginaria;
-		temp[i].imaginaria = fftAudio[i].real*fftIR[i].imaginaria + fftAudio[i].imaginaria*fftIR[i].real;
+		producto[i].real = c1[i].real*c2[i].real - c1[i].imaginaria*c2[i].imaginaria;
+		producto[i].imaginaria = c1[i].real*c2[i].imaginaria + c1[i].imaginaria*c2[i].real;
 	}
-	printf("%s\n","Realizando ifft" );
 
-	// res = F-1(temp). Se reusan buffers
-	float* res = (float*) temp;
-	iditfft2(temp,len,fftAudio);
-	parte_real_buff(fftAudio,len,res);
-	free(fftAudio);
-	free(fftIR);
-	*/
-
-	return NULL;
+	iditfft2_asm(producto,size,buffer);
 }
+
+
+
+float* convolucion_lineal(float* audio, unsigned int size1, float* IR, unsigned int size2) {
+
+	int branch_size = 1024;
+	float* ouput =  calloc(size1+size2-1,  sizeof(complejo));
+
+	unsigned int branchs = size2/branch_size;
+
+	complejo FIR[branchs][branch_size*2];
+
+
+	// Fft de los pedazos de la IR
+	for (int i = 0; i < branchs; ++i)
+	{
+		float padded[branch_size*2];
+		for (int j = 0; j < branch_size; ++j)
+		{
+			padded[j] = IR[ i*branch_size + j ];
+			padded[j+branch_size] =  0.0;
+		}
+
+		ditfft2_asm(padded, branch_size*2,FIR[i]);
+	}
+
+	
+	for (int i = 0; i < size1-branch_size+1; i+=branch_size)
+	{
+		printf("Completado %f\n", (i*1.0)/size1);
+
+		// Fft del pedazo del audio
+		float padded[branch_size*2];
+		for (int j = 0; j < branch_size; ++j)
+		{
+			padded[j] = audio[ i + j ];
+			padded[j+branch_size] =  0.0;
+
+		}
+
+
+		complejo Faudio[branch_size*2];
+		ditfft2_asm(padded,branch_size*2,Faudio);
+
+		complejo Fconv[branch_size*2];
+		complejo IFconv[branch_size*2];
+
+
+		for (int j = 0; j < branchs; ++j)
+		{
+			convolucion_circular(Faudio,FIR[j],branch_size*2,IFconv);
+			for (int k = 0; k < branch_size*2-1; ++k)
+			{ 
+				ouput[i+j*branch_size+k] +=  IFconv[k].real;
+			}
+		}
+	}
+
+	return ouput;
+}
+	
 
 void precalcular_rotaciones() {
 	for (int i = 0; i < PRECALCULADOS; ++i)

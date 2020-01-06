@@ -27,15 +27,30 @@ void efecto_phaser(float* ptr) {
 		int offset = (int) (cos((2*PI*i)/period)*amplitud + delay);
 		out[i] = ptr[i] + ptr[i-offset]*decay;
 	}
-	save_wav("output.wav",out);
+	save_wav("phaser.wav",out);
 	free(out);
 }
 
 
-void efecto_convolucion(float* audio, float* IR, unsigned int IR_size){
+void efecto_reverb(float* audio, float* IR, unsigned int IR_size){
 	unsigned int audio_size = audio_in_info.frames;
-	float* conv =  convolucion(audio, audio_size, IR, IR_size);
-	save_wav("output.wav",conv);
+	float* conv =  convolucion_lineal(audio, audio_size, IR, IR_size);
+
+	/*double acumulado = 0.0;
+	for (int i = 0; i < IR_size; ++i)
+	{
+		double d = (double) IR[i];
+		acumulado += fabs(d);
+	}
+	*/
+
+	//  para bajar el volumen un poco
+	for (int i = 0; i < audio_size+IR_size-1; ++i)
+	{
+		conv[i] /= 50.0;
+	}
+
+	save_wav_len("convolucion.wav",conv,audio_size+IR_size-1);
 	free(conv);
 	return;
 }
@@ -116,7 +131,6 @@ float* resample(float* audio, unsigned int size, float f) {
 	float* output = malloc(nuevo_largo*sizeof(float));
 	f = (size-1)*1.0/(1.0*nuevo_largo-1.0);
 
-	printf("%f\n",f );
 
 	for (int i = 0; i < nuevo_largo; ++i)
 	{

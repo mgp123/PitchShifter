@@ -43,10 +43,18 @@ void ditfft2_stereo(float* c, unsigned int size, complejo* buffer);
 void iditfft2(complejo* c, unsigned int size, complejo* buffer);
 void iditfft2_aux(complejo* c, unsigned int size,unsigned int hop, complejo* buffer);
 
-// convolucion de audio con IR. La salida tiene tamaño de audio. 
-// supone size1 >= size2
+
+// toma la transformada de dos arreglos del mismo tamaño
+// realiza multiplicacion compleja, elemento a elemento y lo coloca en el buffer
+// (la conv circular de los dos arreglos iniciales)
+// supone size permite realizar idfft
+void convolucion_circular(complejo* c1, complejo* c2, unsigned int size, complejo* buffer);
+
+// convolucion de audio con IR. La salida tiene tamaño de size1 + size2 -1. 
+// supone size1 >> size2
+// realiza la convolucion LINEAL, NO LA CIRCULAR
 // lo que devuelve esta en el heap asi que hay que utilizar free cuando se termine de usar
-float* convolucion(float* audio, unsigned int size1, float* IR, unsigned int size2);
+float* convolucion_lineal(float* audio, unsigned int size1, float* IR, unsigned int size2);
 
 // rotaciones a usar por fft
 // las rotaciones van de 0 a -pi avanzado de a -1/precalculados
