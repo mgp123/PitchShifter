@@ -203,7 +203,7 @@ float* convolucion_lineal(float* audio, unsigned int size1, float* IR, unsigned 
 
 		for (int j = 0; j < branchs; ++j)
 		{
-			convolucion_circular(Faudio,FIR[j],branch_size*2,IFconv);
+			convolucion_circular_asm(Faudio,FIR[j],branch_size*2,IFconv);
 			for (int k = 0; k < branch_size*2-1; ++k)
 			{ 
 				ouput[i+j*branch_size+k] +=  IFconv[k].real;

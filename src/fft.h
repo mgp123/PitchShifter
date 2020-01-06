@@ -49,6 +49,7 @@ void iditfft2_aux(complejo* c, unsigned int size,unsigned int hop, complejo* buf
 // (la conv circular de los dos arreglos iniciales)
 // supone size permite realizar idfft
 void convolucion_circular(complejo* c1, complejo* c2, unsigned int size, complejo* buffer);
+extern void convolucion_circular_asm(complejo* c1, complejo* c2, unsigned int size, complejo* buffer);
 
 // convolucion de audio con IR. La salida tiene tamaño de size1 + size2 -1. 
 // supone size1 >> size2

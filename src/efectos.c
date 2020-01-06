@@ -36,14 +36,6 @@ void efecto_reverb(float* audio, float* IR, unsigned int IR_size){
 	unsigned int audio_size = audio_in_info.frames;
 	float* conv =  convolucion_lineal(audio, audio_size, IR, IR_size);
 
-	/*double acumulado = 0.0;
-	for (int i = 0; i < IR_size; ++i)
-	{
-		double d = (double) IR[i];
-		acumulado += fabs(d);
-	}
-
-	*/
 	//  para bajar el volumen un poco, la convolucion aumenta el volumen
 	// esta reduccion es a ojo. Puede afectar demasiados a algunas ir.
 	// reducirlo de manera que quede homogeneo para todas las ir

@@ -7,6 +7,7 @@ conjugador: dd 1.0, -1.0, 1.0, -1.0
 section.text:
 global ditfft2_asm
 global iditfft2_asm
+global convolucion_circular_asm
 
 ; supone que el tamaño es potencia de 2 y <= 2048
 ; en precalculados estaria un puntero a los complejos precalculados
@@ -305,6 +306,82 @@ iditfft2_aux_asm:
 	subps xmm0, xmm1
 	movsd [rcx + 8], xmm0
 	ret
+
+convolucion_circular_asm:
+	shl rdx, 32
+	shr rdx, 32
+	%define SIZE rdx
+	%define ARREGLOA rdi
+	%define ARREGLOB rsi
+
+
+	; se genera el espacio en el stack para los complejos
+	mov rax, SIZE
+	mov r8, rsp
+	shl rax, 3
+	sub rsp, rax
+	mov r9, rsp
+
+	xor rax, rax
+	.ciclo:
+	cmp rax, SIZE
+	je .fin
+
+	movdqu xmm0, [ARREGLOA] ; xmm0 = | bufA1.im | bufA1.re | bufA0.im | bufA0.re |
+	movdqu xmm1, [ARREGLOB] ; xmm1 = | bufB1.im | bufB1.re | bufB0.im | bufB0.re |
+
+	movdqu xmm2, [ARREGLOA + 16] ; xmm2 = | bufA3.im | bufA3.re | bufA2.im | bufA2.re |
+	movdqu xmm3, [ARREGLOB + 16] ; xmm3 = | bufB3.im | bufB3.re | bufB2.im | bufB2.re |
+
+	movdqa xmm4, xmm0
+	mulps xmm4, xmm1
+
+	movdqa xmm5, xmm2
+	mulps xmm5, xmm3
+
+	hsubps xmm4, xmm5
+
+	pshufd xmm0, xmm0, 10110001b
+	mulps xmm0, xmm1
+
+	pshufd xmm2, xmm2, 10110001b
+	mulps xmm2, xmm3
+
+	haddps xmm0, xmm2
+
+	; xmm4 = | A3.re*B3.re - A3.im*B3.im | A2.re*B2.re - A2.im*B2.im | A1.re*B1.re - A1.im*B1.im | A0.re*B3.re - A0.im*B3.im |
+	; xmm0 = | A3.re*B3.im + A3.im*B3.re | A2.re*B2.im + A2.im*B2.re | A1.re*B1.im + A1.im*B1.re | A0.re*B3.im + A0.im*B3.re |
+
+	movdqa xmm1, xmm4
+	punpckldq xmm1, xmm0
+	movdqu [r9], xmm1
+
+	punpckhdq xmm4, xmm0
+	movdqu [r9 + 16], xmm4
+
+	; se aumenta 4 complejps
+	add r9, 32
+
+	add rax, 4
+	add ARREGLOA, 32
+	add ARREGLOB, 32
+
+	jmp .ciclo
+
+	.fin:
+	mov rdi, rsp ; producto
+	mov rsi, rdx ; size
+	mov rdx, rcx ; buffer donde se coloca el resultado
+
+	push r8
+	call iditfft2_asm
+
+	pop r8
+	mov rsp, r8 ; desarmamos el espacio en el stack
+	ret
+
+
+
 
 
 
