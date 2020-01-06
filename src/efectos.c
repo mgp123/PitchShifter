@@ -42,12 +42,15 @@ void efecto_reverb(float* audio, float* IR, unsigned int IR_size){
 		double d = (double) IR[i];
 		acumulado += fabs(d);
 	}
-	*/
 
-	//  para bajar el volumen un poco
+	*/
+	//  para bajar el volumen un poco, la convolucion aumenta el volumen
+	// esta reduccion es a ojo. Puede afectar demasiados a algunas ir.
+	// reducirlo de manera que quede homogeneo para todas las ir
+	// requiere analizar la ir de alguna forma, ni idea
 	for (int i = 0; i < audio_size+IR_size-1; ++i)
 	{
-		conv[i] /= 50.0;
+		conv[i] /= 25.0;
 	}
 
 	save_wav_len("convolucion.wav",conv,audio_size+IR_size-1);

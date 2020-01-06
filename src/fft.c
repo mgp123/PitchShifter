@@ -46,31 +46,7 @@ unsigned int siguiente_potencia(unsigned int x){
 
 
 void ditfft2(float* c, unsigned int size, complejo* buffer){
-	for (int i = 0; i < size; ++i)
-	{
-		if(c[i] != c[i]) {
-			for (int k = 0; k < size; ++k)
-				{
-					printf("%f\n",c[k]);
-				}
-
-			printf("si, es el input\n");	
-			exit(-1);
-		}
-	}
-
 	ditfft2_aux(c,size,1,buffer);
-
-	for (int i = 0; i < size; ++i)
-	{
-		if(buffer[i].real != buffer[i].real) {
-			for (int k = 0; k < size; ++k)
-				{
-					printf("%f\n",c[k]);
-				}	
-			exit(-1);
-		}
-	}
 }
 // se puede pasar un arreglo de numeros reales y se genera el complejo en el caso base
 void ditfft2_aux(float* c, unsigned int size, unsigned int hop, complejo* buffer) {
