@@ -42,7 +42,7 @@ void efecto_reverb(float* audio, float* IR, unsigned int IR_size){
 	// requiere analizar la ir de alguna forma, ni idea
 	for (int i = 0; i < audio_size+IR_size-1; ++i)
 	{
-		conv[i] /= 25.0;
+		conv[i] /= 15.0;
 	}
 
 	save_wav_len("convolucion.wav",conv,audio_size+IR_size-1);
@@ -153,5 +153,43 @@ void efecto_repitch(float* audio, unsigned int size, float f) {
 	save_wav_len("repitch.wav",output,audio_in_info.frames);
 
 	free(temp);
+	free(output);
+}
+
+
+
+void efecto_vocoder(float* modulator, float* carrier, unsigned int window_size) {
+	unsigned int size = audio_in_info.frames;
+	float* output = calloc(size,sizeof(float));
+	float hanning[window_size];
+
+	for (int i = 0; i < window_size; ++i)
+	{
+		hanning[i] = (float) sin((M_PI*i)/(window_size-1));
+		hanning[i] *= hanning[i];
+	}
+
+	complejo F1[window_size];
+	complejo F2[window_size];
+
+	for (int i = 0; i < size - window_size-1; i += window_size/2)
+	{
+		ditfft2_asm(&modulator[i],window_size,F1);
+		ditfft2_asm(&carrier[i],window_size,F2);
+
+		for(int j = 0; j < window_size; j++) {
+			float modulo = sqrt(F1[j].real*F1[j].real + F1[j].imaginaria*F1[j].imaginaria); 
+			F2[j].real *= modulo;
+			F2[j].imaginaria *= modulo;
+		}
+
+		iditfft2_asm(F2,window_size,F1);
+
+		for(int j = 0; j < window_size; j++) {
+			output[i+j] += F1[j].real*hanning[j]/50.0;
+		}
+	}
+
+	save_wav("vocoder.wav",output);
 	free(output);
 }
