@@ -182,7 +182,7 @@ float* convolucion_lineal(float* audio, unsigned int size1, float* IR, unsigned 
 	
 	for (int i = 0; i < size1-branch_size+1; i+=branch_size)
 	{
-		printf("Completado %f\n", (i*1.0)/size1);
+		// printf("Completado %f\n", (i*1.0)/size1);
 
 		// Fft del pedazo del audio
 		float padded[branch_size*2];

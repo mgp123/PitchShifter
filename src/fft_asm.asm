@@ -1,5 +1,6 @@
 section.data:
 extern rotaciones
+extern calloc
 conjugador: dd 1.0, -1.0, 1.0, -1.0
 %define precalculados rotaciones
 
@@ -8,6 +9,7 @@ section.text:
 global ditfft2_asm
 global iditfft2_asm
 global convolucion_circular_asm
+global convolucion_lineal_directa
 
 ; supone que el tamaño es potencia de 2 y <= 2048
 ; en precalculados estaria un puntero a los complejos precalculados
@@ -381,6 +383,111 @@ convolucion_circular_asm:
 	ret
 
 
+
+; float* convoucion lineal (float* a, unsigned int size_a, float* b , unsigned int size_b)
+
+convolucion_lineal_directa:
+	push r12
+	push r13
+	push r14
+	push r15
+	sub rsp, 8
+
+	mov r12, rdi
+	mov r13, rsi
+	mov r14, rdx
+	mov r15, rcx
+
+	%define ARREGLO_A r12
+	%define SIZE_A r13
+	%define ARREGLO_B r14
+	%define SIZE_B r15
+
+	mov rdi, SIZE_A
+	add rdi, SIZE_B
+	mov rsi, 4
+
+	; calloc (sizeA + sizeB, sizeof(float))
+	call calloc
+
+	; se ignoran los ultimos elementos si el size no es multiplo de 4
+	sub SIZE_A, 3
+	sub SIZE_B, 3
+
+
+	mov rdx, rax
+	%define OUTPUT rdx
+
+	mov rcx, ARREGLO_B
+	%define ARREGLO_B_inicio rcx
+
+	xor rdi, rdi
+	.cicloA:
+		cmp rdi, SIZE_A
+		jae .fin
+		movdqu xmm0, [ARREGLO_A]	
+
+		xor rsi, rsi
+		.cicloB:
+			cmp rsi, SIZE_B
+			jae .finCicloA	
+
+			movdqu xmm1, [ARREGLO_B]	
+
+			pshufd xmm2, xmm0, 0 ; el primer elemento de xmm0
+			mulps xmm2, xmm1
+			movdqu xmm3, [OUTPUT]
+			addps xmm2, xmm3
+			movdqu [OUTPUT], xmm2
+			add OUTPUT, 4 ; se mueve un solo delay	
+
+			pshufd xmm2, xmm0, 01010101b ; el segundo elemento de xmm0
+			mulps xmm2, xmm1
+			movdqu xmm3, [OUTPUT]
+			addps xmm2, xmm3
+			movdqu [OUTPUT], xmm2
+			add OUTPUT, 4 ; se mueve un solo delay	
+
+			pshufd xmm2, xmm0, 10101010b ; el tercer elemento de xmm0
+			mulps xmm2, xmm1
+			movdqu xmm3, [OUTPUT]
+			addps xmm2, xmm3
+			movdqu [OUTPUT], xmm2
+			add OUTPUT, 4 ; se mueve un solo delay	
+
+			pshufd xmm2, xmm0, 11111111b ; el cuarto elemento de xmm0
+			mulps xmm2, xmm1
+			movdqu xmm3, [OUTPUT]
+			addps xmm2, xmm3
+			movdqu [OUTPUT], xmm2
+			add OUTPUT, 4 ; se mueve un solo delay	
+
+			add rsi, 4  
+			add ARREGLO_B, 16 ;  4 elementos de B  	
+
+			jmp .cicloB
+
+	.finCicloA:
+	add rdi, 4
+	add ARREGLO_A, 16 ;  4 elementos de A 
+
+	; reposicionamiento de OUTPUT
+	mov OUTPUT, rdi
+	shl OUTPUT, 2
+	add OUTPUT, rax
+
+	; reposicionamiento de ARREGLO_B
+	mov ARREGLO_B, ARREGLO_B_inicio
+
+	jmp .cicloA
+
+	.fin:
+	add rsp, 8
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	ret
 
 
 

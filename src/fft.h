@@ -56,6 +56,7 @@ extern void convolucion_circular_asm(complejo* c1, complejo* c2, unsigned int si
 // realiza la convolucion LINEAL, NO LA CIRCULAR
 // lo que devuelve esta en el heap asi que hay que utilizar free cuando se termine de usar
 float* convolucion_lineal(float* audio, unsigned int size1, float* IR, unsigned int size2);
+extern float* convolucion_lineal_directa(float* audio, unsigned int size1, float* IR, unsigned int size2);
 
 // rotaciones a usar por fft
 // las rotaciones van de 0 a -pi avanzado de a -1/precalculados
