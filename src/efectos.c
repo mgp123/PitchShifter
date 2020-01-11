@@ -34,7 +34,7 @@ void efecto_phaser(float* ptr) {
 
 void efecto_reverb(float* audio, float* IR, unsigned int IR_size){
 	unsigned int audio_size = audio_in_info.frames;
-	float* conv =  convolucion_lineal_directa(audio, audio_size, IR, IR_size);
+	float* conv =  convolucion_lineal(audio, audio_size, IR, IR_size);
 
 	//  para bajar el volumen un poco, la convolucion aumenta el volumen
 	// esta reduccion es a ojo. Puede afectar demasiados a algunas ir.
