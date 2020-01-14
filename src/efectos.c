@@ -161,18 +161,25 @@ void efecto_repitch(float* audio, unsigned int size, float f) {
 void efecto_vocoder(float* modulator, float* carrier, unsigned int window_size) {
 	unsigned int size = audio_in_info.frames;
 	float* output = calloc(size,sizeof(float));
+	vocoder_asm(modulator,carrier,window_size,output,size);
+	//  para bajar el volumen un poco
+	for (int i = 0; i < size; ++i)
+	{
+		output[i] /= 50.0;
+	}
+	save_wav("vocoder.wav",output);
+	free(output);
+}
+
+
+void vocoder(float* modulator, float* carrier, unsigned int window_size, float* output, unsigned int size) {
 	float hanning[window_size];
 
-	for (int i = 0; i < window_size; ++i)
-	{
-		hanning[i] = (float) sin((M_PI*i)/(window_size-1));
-		hanning[i] *= hanning[i];
-	}
-
+	precalcular_hanning(hanning, window_size);
 	complejo F1[window_size];
 	complejo F2[window_size];
 
-	for (int i = 0; i < size - window_size-1; i += window_size/2)
+	for (int i = 0; i < size - window_size+1; i += window_size/2)
 	{
 		ditfft2_asm(&modulator[i],window_size,F1);
 		ditfft2_asm(&carrier[i],window_size,F2);
@@ -186,10 +193,15 @@ void efecto_vocoder(float* modulator, float* carrier, unsigned int window_size) 
 		iditfft2_asm(F2,window_size,F1);
 
 		for(int j = 0; j < window_size; j++) {
-			output[i+j] += F1[j].real*hanning[j]/50.0;
+			output[i+j] += F1[j].real*hanning[j];
 		}
-	}
+	}	
+}
 
-	save_wav("vocoder.wav",output);
-	free(output);
+void precalcular_hanning(float* hanning, unsigned int window_size) {
+	for (int i = 0; i < window_size; ++i)
+	{
+		hanning[i] = (float) sin((M_PI*i)/(window_size-1));
+		hanning[i] *= hanning[i];
+	}
 }

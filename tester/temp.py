@@ -29,3 +29,33 @@ plt.ylabel("ciclos")
 plt.tight_layout()
 plt.show()
 
+
+data = np.loadtxt("res_circ.txt")
+plt.plot(2**(np.arange(10)+2), data[0], label = "O0")
+plt.plot(2**(np.arange(10)+2), data[1], label = "O1")
+plt.plot(2**(np.arange(10)+2), data[2], label = "O2")
+plt.plot(2**(np.arange(10)+2), data[3], label = "O3")
+plt.plot(2**(np.arange(10)+2), data[4], label = "asm")
+
+
+plt.legend()
+plt.xlabel("sizeA") 
+plt.ylabel("ciclos")
+plt.tight_layout()
+plt.show()
+
+data = np.loadtxt("res_circ2.txt")
+#plt.plot(2**(np.arange(10)+2), data[0], label = "O0 con fft en asm")
+plt.plot(2**(np.arange(10)+2), data[1], label = "O1 con fft en asm")
+plt.plot(2**(np.arange(10)+2), data[2], label = "O2 con fft en asm")
+plt.plot(2**(np.arange(10)+2), data[3], label = "O3 con fft en asm")
+plt.plot(2**(np.arange(10)+2), data[4], label = "asm")
+
+
+plt.legend()
+plt.xlabel("sizeA") 
+plt.ylabel("ciclos")
+plt.tight_layout()
+plt.show()
+
+

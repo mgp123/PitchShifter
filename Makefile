@@ -15,4 +15,4 @@ clean:
 
 tester: tester/test_reverb.c ${ASM} ${TESTER_C} src/*.h 
 	make ${ASM_O}
-	gcc tester/test_reverb.c ${TESTER_C}  src/*.h src/*.o -o test -lsndfile -lm
+	gcc tester/test_reverb.c ${TESTER_C}  src/*.h src/*.o -o test -lsndfile -lm 
