@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 	
 	float* carrier = read_wav("sonidos/carrier.wav");
 	unsigned int size_ir =  audio_in_info.frames;
-	float* modulator = read_wav("sonidos/maca.wav");
+	float* modulator = read_wav("sonidos/speech.wav");
 	efecto_vocoder(modulator,carrier, 1024);
 
 	free(carrier);

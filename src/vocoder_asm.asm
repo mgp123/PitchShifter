@@ -1,15 +1,11 @@
-section.data:
-SIZE: dq 0
-; punteros a la parte del stack donde se encuentan
-hanning: dq 0
-F1: dq 0
-F2: dq 0
 section.text:
 global vocoder_asm
 extern precalcular_hanning
 extern ditfft2_asm
 extern iditfft2_asm
-vocoder_asm: ;void vocoder_asm(float* modulator, float* carrier, unsigned int window_size, float* buffer)
+vocoder_asm:
+ ;void vocoder_asm(float* modulator, float* carrier, unsigned int window_size, float* buffer, int size)
+
 	push r12
 	push r13
 	push r14
@@ -31,7 +27,7 @@ vocoder_asm: ;void vocoder_asm(float* modulator, float* carrier, unsigned int wi
 	shr r8, 32
 	sub r8, WINDOW_SIZE
 	inc r8
-	mov [SIZE], r8
+	mov rbx, r8
 
 	; generando espacio para hamming
 	mov rdi, WINDOW_SIZE
@@ -43,17 +39,27 @@ vocoder_asm: ;void vocoder_asm(float* modulator, float* carrier, unsigned int wi
 	mov rdi, rsp
 	mov rsi , WINDOW_SIZE
 	call precalcular_hanning
-	mov [hanning], rsp
+	mov rsi, rsp
 
 
 	; espacio en el stack para buffers
 	mov rdi, WINDOW_SIZE
 	shl rdi, 3
 	sub rsp, rdi
-	mov [F1], rsp
+	mov rdx, rsp
 	sub rsp, rdi
-	mov [F2], rsp
+	mov rcx, rsp
 
+	;ponemos punteros a los arreglos juntos en el stack
+	push rbx; SIZE
+	push rsi; hanning
+	push rdx; F1
+	push rcx; F2
+	%define F2 rsp
+	%define F1 rsp+8
+	%define hanning rsp+16
+	%define SIZE rsp+24
+	
 	xor rbx, rbx
 	.ciclo:
 	cmp rbx, [SIZE]; tamaño del modulator - windows size + 1
@@ -99,6 +105,7 @@ vocoder_asm: ;void vocoder_asm(float* modulator, float* carrier, unsigned int wi
 	call iditfft2_asm
 
 
+	; problemas por aca
 	xor rdi,rdi
 	mov rsi, [F1]
 	mov rdx, [hanning]
@@ -125,10 +132,11 @@ vocoder_asm: ;void vocoder_asm(float* modulator, float* carrier, unsigned int wi
 	.fin_ciclo:
 	mov rdi, WINDOW_SIZE
 	shr rdi, 1; hop = window_size/2
+	add rbx, rdi
+	shl rdi, 2; un float son 4 bytes
 	sub OUTPUT, rdi ; el OUTPUT esta desfazado adelante por el ultimo paso
 	add MODULATOR, rdi
 	add CARRIER, rdi
-	add rbx, rdi
 	jmp .ciclo
 
 	.fin:
@@ -136,7 +144,13 @@ vocoder_asm: ;void vocoder_asm(float* modulator, float* carrier, unsigned int wi
 	shl rdi, 2
 	add rsp, rdi ; el espacio por hanning
 	shl rdi, 2
-	sub rsp, rdi ; el espacio por F1 y F2
+	add rsp, rdi ; el espacio por F1 y F2
+
+	; el espacio por los punteros
+	pop rdi
+	pop rdi
+	pop rdi
+	pop rdi
 
 	pop rbx
 	pop r15 

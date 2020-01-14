@@ -161,6 +161,7 @@ void efecto_repitch(float* audio, unsigned int size, float f) {
 void efecto_vocoder(float* modulator, float* carrier, unsigned int window_size) {
 	unsigned int size = audio_in_info.frames;
 	float* output = calloc(size,sizeof(float));
+	float * ref = output;
 	vocoder_asm(modulator,carrier,window_size,output,size);
 	//  para bajar el volumen un poco
 	for (int i = 0; i < size; ++i)
@@ -168,7 +169,7 @@ void efecto_vocoder(float* modulator, float* carrier, unsigned int window_size) 
 		output[i] /= 50.0;
 	}
 	save_wav("vocoder.wav",output);
-	free(output);
+	free(ref);
 }
 
 
