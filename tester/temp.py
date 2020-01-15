@@ -76,12 +76,31 @@ plt.show()
 
 
 
-data = np.loadtxt("vocoder_window.txt")
-plt.plot(2**(np.arange(10)+2), data, label = "asm")
+data = np.loadtxt("vocoder_window_compC.txt")
+plt.plot(2**(np.arange(10)+2), data[0], label = "O0")
+plt.plot(2**(np.arange(10)+2), data[1], label = "01")
+plt.plot(2**(np.arange(10)+2), data[2], label = "02")
+plt.plot(2**(np.arange(10)+2), data[3], label = "O3")
+plt.plot(2**(np.arange(10)+2), data[4], label = "asm")
+
 
 
 plt.legend()
 plt.xlabel("window size") 
+plt.ylabel("ciclos")
+plt.tight_layout()
+plt.show()
+
+data = np.loadtxt("data_fft.txt")
+plt.plot(2**(np.arange(10)+2), data[0], label = "O0")
+plt.plot(2**(np.arange(10)+2), data[1], label = "01")
+plt.plot(2**(np.arange(10)+2), data[2], label = "02")
+plt.plot(2**(np.arange(10)+2), data[3], label = "O3")
+plt.plot(2**(np.arange(10)+2), data[4], label = "asm")
+
+
+plt.legend()
+plt.xlabel("size") 
 plt.ylabel("ciclos")
 plt.tight_layout()
 plt.show()
