@@ -5,47 +5,7 @@
 
 int main(int argc, char const *argv[])
 {
-	precalcular_rotaciones();
-
-	FILE *fptr;
-	fptr = fopen("tester/res_circ2.txt","a");
-
-	unsigned long start, end;
-
-	int tamanios = 10;
-	int repeticiones = 50;
-
-	complejo a[4<<tamanios];
-	complejo b[4<<tamanios];
-
-
-	for (int i = 0; i < tamanios; ++i)
-	{
-		printf("Completado %f\n", (100.0*i)/tamanios);
-
-		unsigned long mean = 0;
-		unsigned int sizeA = 4<<(i);
-
-		printf("size A = %d\n", sizeA);
-
-		for (int j = 0; j < repeticiones; ++j)
-		{
-			MEDIR_TIEMPO_START(start);
-			convolucion_circular_asm(a,b,sizeA,b);
-			MEDIR_TIEMPO_STOP(end);
-			mean += end - start;
-		}
-
-		mean = mean/tamanios;
-		fprintf(fptr, "%lu ", mean );
-	}
-
-	fprintf(fptr,"\n");	
-	fclose(fptr); 
-
-
-
-
+	
 	return 0;
 }
 
@@ -94,7 +54,7 @@ void data_variarndo_size() {
 }
 
 void data_comp_directa(){
-		precalcular_rotaciones();
+	precalcular_rotaciones();
 
 	FILE *fptr;
 	fptr = fopen("res.txt","w");
@@ -157,5 +117,47 @@ void data_comp_directa(){
 
 	fclose(fptr); 
 
+}
+
+// Este se corre varias veces, cambiando los flags de compilacion en cada una
+// para data con asm, remplazar por convolucion_circular_asm.
+void data_contra_C() {
+	precalcular_rotaciones();
+
+	FILE *fptr;
+	fptr = fopen("tester/res_circ2.txt","a");
+
+	unsigned long start, end;
+
+	int tamanios = 10;
+	int repeticiones = 50;
+
+	complejo a[4<<tamanios];
+	complejo b[4<<tamanios];
+
+
+	for (int i = 0; i < tamanios; ++i)
+	{
+		printf("Completado %f\n", (100.0*i)/tamanios);
+
+		unsigned long mean = 0;
+		unsigned int sizeA = 4<<(i);
+
+		printf("size A = %d\n", sizeA);
+
+		for (int j = 0; j < repeticiones; ++j)
+		{
+			MEDIR_TIEMPO_START(start);
+			convolucion_circular(a,b,sizeA,b);
+			MEDIR_TIEMPO_STOP(end);
+			mean += end - start;
+		}
+
+		mean = mean/tamanios;
+		fprintf(fptr, "%lu ", mean );
+	}
+
+	fprintf(fptr,"\n");	
+	fclose(fptr); 
 
 }

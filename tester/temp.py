@@ -59,3 +59,29 @@ plt.tight_layout()
 plt.show()
 
 
+data = np.loadtxt("vocoder_data.txt")
+x = np.arange(50)*1024*10
+plt.plot( x,data[0], label = "O0")
+plt.plot( x,data[1], label = "O1")
+plt.plot( x,data[2], label = "O2")
+plt.plot( x,data[3], label = "O3")
+plt.plot( x,data[4], label = "asm")
+
+
+plt.legend()
+plt.xlabel("size") 
+plt.ylabel("ciclos")
+plt.tight_layout()
+plt.show()
+
+
+
+data = np.loadtxt("vocoder_window.txt")
+plt.plot(2**(np.arange(10)+2), data, label = "asm")
+
+
+plt.legend()
+plt.xlabel("window size") 
+plt.ylabel("ciclos")
+plt.tight_layout()
+plt.show()
