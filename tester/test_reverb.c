@@ -43,7 +43,7 @@ void data_variarndo_size() {
 				valCirc[i][j][k] = end - start;
 				mean += end - start;
 			}
-			mean = mean/tamanios;
+			mean = mean/repeticiones;
 			fprintf(fptr, "%lu ", mean );
 		}
 
@@ -88,7 +88,7 @@ void data_comp_directa(){
 			mean += end - start;
 		}
 
-		mean = mean/tamanios;
+		mean = mean/repeticiones;
 		fprintf(fptr, "%lu ", mean );
 	}
 
@@ -111,7 +111,7 @@ void data_comp_directa(){
 			mean += end - start;
 		}
 
-		mean = mean/tamanios;
+		mean = mean/repeticiones;
 		fprintf(fptr, "%lu ", mean );
 	}
 
@@ -153,7 +153,7 @@ void data_contra_C() {
 			mean += end - start;
 		}
 
-		mean = mean/tamanios;
+		mean = mean/repeticiones;
 		fprintf(fptr, "%lu ", mean );
 	}
 

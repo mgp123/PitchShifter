@@ -41,7 +41,7 @@ void distintas_windows_compC() {
 			mean += end - start;
 		}
 
-		mean = mean/tamanios;
+		mean = mean/repeticiones;
 		fprintf(fptr, "%lu ", mean );
 	}
 

@@ -41,7 +41,7 @@ void compC() {
 			mean += end - start;
 		}
 
-		mean = mean/tamanios;
+		mean = mean/repeticiones;
 		fprintf(fptr, "%lu ", mean );
 	}
 
@@ -85,7 +85,7 @@ void distintos_windows() {
 			mean += end - start;
 		}
 
-		mean = mean/tamanios;
+		mean = mean/repeticiones;
 		fprintf(fptr, "%lu ", mean );
 	}
 
@@ -129,7 +129,7 @@ void distintas_windows_compC() {
 			mean += end - start;
 		}
 
-		mean = mean/tamanios;
+		mean = mean/repeticiones;
 		fprintf(fptr, "%lu ", mean );
 	}
 

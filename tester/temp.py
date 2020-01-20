@@ -104,3 +104,33 @@ plt.xlabel("size")
 plt.ylabel("ciclos")
 plt.tight_layout()
 plt.show()
+
+
+
+data = np.loadtxt("data_resample_compres.txt")
+plt.plot(np.arange(50)*0.1+ 1, data[0], label = "O0")
+plt.plot(np.arange(50)*0.1+ 1, data[1], label = "01")
+plt.plot(np.arange(50)*0.1+ 1, data[2], label = "02")
+plt.plot(np.arange(50)*0.1+ 1, data[3], label = "O3")
+plt.plot(np.arange(50)*0.1+ 1, data[4], label = "asm")
+
+
+plt.legend()
+plt.xlabel("coeficiente de resample") 
+plt.ylabel("ciclos")
+plt.tight_layout()
+plt.show()
+
+data = np.loadtxt("data_resample_estir.txt")
+plt.plot((np.arange(50)*0.1+ 1)**-1.0, data[0], label = "O0")
+plt.plot((np.arange(50)*0.1+ 1)**-1.0, data[1], label = "01")
+plt.plot((np.arange(50)*0.1+ 1)**-1.0, data[2], label = "02")
+plt.plot((np.arange(50)*0.1+ 1)**-1.0, data[3], label = "O3")
+plt.plot((np.arange(50)*0.1+ 1)**-1.0, data[4], label = "asm")
+
+
+plt.legend()
+plt.xlabel("coeficiente de resample") 
+plt.ylabel("ciclos")
+plt.tight_layout()
+plt.show()
