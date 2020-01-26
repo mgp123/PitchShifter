@@ -19,6 +19,8 @@ extern void vocoder_asm(float* modulator, float* carrier, unsigned int window_si
 // devuelve en el heap
 float* stretch(float* audio, unsigned int size, float f, unsigned int window_size, unsigned int hop);
 
+extern float* stretch_asm(float* audio, unsigned int size, float f, unsigned int window_size, unsigned int hop);
+
 // devuelve el audio resampleado con velocidad f usando interpolacion
 //Ej: si f = 2 entonces se devuelve un audio de mitad de duracion y con el doble de frecuencia.
 // devuelve en el heap
