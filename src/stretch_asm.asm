@@ -21,6 +21,17 @@ section.text
 	extern sqrt
 	extern atan2
 
+;obs: push16 y pop16 no desalinean la pila porque son movimientos de 16 bytes
+%macro PUSH16 1
+movdqu [rsp], %1
+sub rsp, 16
+%endmacro
+
+%macro POP16 1
+add rsp, 16
+movdqu %1, [rsp]
+%endmacro
+
 stretch_asm:
 ;float* stretch(float* audio, unsigned int size, float f, unsigned int window_size, unsigned int hop){
 	;RDI -> audio (float* - 8B)
@@ -56,20 +67,22 @@ stretch_asm:
 	xor rdi, rdi
 	mov edi, window_size
 	mov rsi, sizeof_float
+	PUSH16 f   ;lo dejamos abajo de todos los push que vamos a hacer ahora
 	call calloc   ;lo inicializo en ceros
 
 	push rax  
-	;esp+8 tiene ahora phase
+	;rsp+8 tiene ahora phase
 	xor rax, rax   ;para q no se rompa malloc (?)
 	mov edi, window_size*sizeof_float
 	sub rsp, 8
 	call malloc    ;no necesito q esté en 0
+
 	add rsp, 8
 	push rax       ;pila alineada
 
 	; Mi pila ahora:
-	; esp+8: hanning (array de *windows_size* floats)
-	; esp+16: phase (array de *windows_size* floats)
+	; rsp+8: hanning (array de *windows_size* floats)
+	; rsp+16: phase (array de *windows_size* floats)
 
 	xor rax, rax
 	mov edi, window_size*sizeof_float
@@ -101,36 +114,50 @@ stretch_asm:
 	mov rsi, 4
 	call calloc
 	push rax      ; output
-	sub esp,8     ; (pila alineada)
+	sub rsp,8     ; (pila alineada)
 
 	;la pila entonces queda:
-	%define output esp+16
-	%define s2 esp+24
-	%define s1 esp+32
-	%define a2 esp+40
-	%define a1 esp+48
-	%define phase esp+56
-	%define hanning esp+62
+	%define output rsp+16
+	%define s2 rsp+24
+	%define s1 rsp+32
+	%define a2 rsp+40
+	%define a1 rsp+48
+	%define phase rsp+56
+	%define hanning rsp+62
+	;y en rsp+70 mi xmm0.... tengo que acomodar la pila cuando termina todo
+
+	movdqu f, [rsp+70]   ;restauramos f
 
 	;necesito window_size-1 para la sgte parte (tenia window_size en xmm2)
 	subss xmm2, [_uno]     ;chequear que esto ande
 
 	mov ecx, window_size  ;i
+	dec ecx
 	.init_hanning:
+		cmp ecx, 0
+		jl .fin
 		movss xmm0, [pi]
-		mov eax, ecx
-		dec eax       ;necesito i-1 por invariante de ciclos en asm
-		mulss xmm0, eax  ;pi*(i-1)
+		mulss xmm0, ecx  ;pi*i
 		divss xmm0, xmm2
 		cvtss2sd xmm0, xmm0
+		
+		PUSH16 f
+		push rcx
+		sub rsp, 8
+		
 		call sin
+		
+		add rsp, 8
+		pop rcx
+		POP16 f
+		
 		cvtsd2ss xmm0, xmm0
 		mulss xmm0, xmm0
-		mov eax, ecx
-		dec eax
-		movss [hanning+eax*sizeof_float], xmm0
-		loop .init_hanning
+		mov rax, [hanning]
+		movss [rax+ecx*sizeof_float], xmm0
+		dec ecx
 
+	.fin:
 	;necesito:
 	; size-window_size-hop
 	; f*hop
@@ -139,61 +166,70 @@ stretch_asm:
 	sub ecx, window_size
 	sub ecx, hop
 	cvtsi2ss xmm3, hop
-	mulss xmm3, f
+	mulss xmm3, f   
+	cvtss2si eax, xmm3     
+	movdqu [rsp+70], eax
+	%define fxhop, rsp+70  
 
 	%define i ecx
 	.ciclo:
 		cmp i, 0
 		je .fin
 		mov r10d, window_size
+		dec r10d
 		%define j r10d
 		.ciclo_a:
-			cmp r10d, 0
+			cmp j, 0
 			jl .fin_a
 			mov r11d, i
 			add r11d, j
 			movdqu xmm4, [audio+r11d*sizeof_float]
-			mulps xmm4, [hanning+j*sizeof_float]
-			movdqu [a1+j*sizeof_float], xmm4
+			mov rax, [hanning]
+			mulps xmm4, [rax+j*sizeof_float]
+			mov rax, [a1]
+			movdqu [rax+j*sizeof_float], xmm4
 			add r11d, hop
 			movdqu xmm4, [audio+r11d*sizeof_float]
-			mulps xmm4, [hanning+j*sizeof_float]
-			movdqu [a2+j*sizeof_float], xmm4
+			mov rax, [hanning]
+			mulps xmm4, [rax+j*sizeof_float]
+			mov rax, [a2]
+			movdqu [rax+j*sizeof_float], xmm4
 			add r10, 4
 			dec r10d, 4
 			jmp .ciclo_a
 
 		.fin_a:
 		;preparo todo para llamar ditfft2
-		push ecx
-		sub esp, 8
-		movdqa xmm0, xmm6
-		movdqa xmm3, xmm7   ;la funcion no usa xmm6 ni 7, aprovecho eso en vez de bajar los datos a memoria para guardarlos
-		mov rdi, a1
+		push i
+		sub rsp, 8
+		PUSH16 f
+		mov rdi, [a1]
 		mov esi, window_size
-		mov rdx, s1
+		mov rdx, [s1]
 		call ditfft2
-		mov rdi, a2
+		mov rdi, [a2]
 		mov esi, window_size
-		mov rdx, s2
+		mov rdx, [s2]
 		call ditfft2
-		movdqa xmm7, xmm3
-		movdqa xmm6, xmm0
-		add esp, 8
-		pop ecx
+		POP16 f
+		add rsp, 8
+		pop i
 
 		mov window_size r10d
 		;%define j r10d
-		sub j, 2
+		sub j, 2    ;mi ciclo hace de a 2 (la de C es de a 1)
+					;window_size es potencia de 2 asi que anda
 		.ciclo_3:
 			cmp j, 0
 			jl .fin_3
 				
 			;chequear... probablemente me complique al pedo
 
-			movdqu xmm4, [s1+j*sizeof_complejo]  ;el float mas bajo es la parte real de s1[j]
+			mov rax, [s1]
+			movdqu xmm4, [rax+j*sizeof_complejo]  ;el float mas bajo es la parte real de s1[j]
 		    ; xmm4: s1[j+1].img, s1[j+1].real, s1[j].img, s1[j].real
-		    movdqu xmm5, [s2+j*sizeof_complejo]
+		    mov rax, [s2]
+		    movdqu xmm5, [rax+j*sizeof_complejo]
 		    ; xmm5: s2[j+1].img, s2[j+1].real, s2[j].img, s2[j].real
 		    pshufd xmm6, xmm5, 10110001b
 		    ; s2[j+1].real, s2[j+1].img, s2[j].real, s2[j].img
@@ -207,7 +243,7 @@ stretch_asm:
 		    psllq xmm2, 8*sizeof_float
 		    psrlq xmm2, 8*sizeof_float
 		    sqrtps xmm2
-		    ; DEBO PRESERVAR XMM2 HASTA MAS ABAJO
+		    ; DEBO PRESERVAR XMM2 HASTA MAS ABAJO (tiene las normas)
 
 		    mulps xmm5, xmm4
 		    mulps xmm6, xmm4
@@ -230,13 +266,34 @@ stretch_asm:
 
 		    ;hacer cosas de push y demas (ecx, r10, los xmm)
 		    ;PUSH
+		    push i
+		    push j
+		    PUSH16 f
+		    PUSH16 XMM2
+		    PUSH16 XMM5
+
 		    movdqa xmm0, xmm6
+		    psrldq xmm0, 4     ;frac.imaginaria (j)
+		    movdqa xmm1, xmm6
+		    pslldq xmm1, 12
+		    psrldq xmm1, 12    ;frac.real (j)
 		    call atan2
 		    movdqa xmm6, xmm0
+		    POP16 XMM5
+		    PUSH16 XMM6
 		    movdqa xmm0, xmm5
+		    psrldq xmm0, 4     ;frac.imaginaria (j+1)
+		    movdqa xmm1, xmm5
+		    pslldq xmm1, 12
+		    psrldq xmm1, 12    ;frac.real (j+1)
 		    call atan2
 		    movdqa xmm5, xmm0
-	 		;PUSH
+	 		
+	 		POP16 XMM6
+	 		POP16 XMM2
+	 		POP16 f
+	 		pop j
+	 		pop i
 
 		    cvtpd2ps xmm5, xmm5 ;v_angular j float
 		    cvtpd2ps xmm6, xmm6 ;v_angular j+1 float
@@ -247,7 +304,8 @@ stretch_asm:
 		    pslldq xmm6, 4
 		    addps xmm5, xmm6    
 		    pxor xmm6, xmm6
-		    movq xmm6, [phase+j*sizeof_float]
+		    mov rax, [phase]
+		    movq xmm6, [rax+j*sizeof_float]
 		    addps xmm5, xmm6 
 		    ; xmm5: 0,0, phase[j+1]+v_angular/f, phase[j]+v_angular/f 
 
@@ -272,60 +330,69 @@ stretch_asm:
 
 
 		    .rephased:
+		    PUSH16 XMM2
+		    PUSH16 f
+		    push i
+		    push j
+
 		    movdqu xmm0, xmm5
 		    pslldq xmm0, 12
 		    psrldq xmm0, 12    ;phase[j]
-		    ;PUSH
 		    call cos
 		    mulss xmm0, xmm2
 		    movdqu xmm3, xmm0
-		    ;POP
 
 		    movdqu xmm0, xmm5
 		    pslldq xmm0, 12
 		    psrldq xmm0, 12    ;phase[j]
-		    ;PUSH
 		    call sin
 			mulss xmm0, xmm2
 		    pslldq xmm0, 4
-		    addps xmm3, xmm0   ;xmm2: 0.0,0.0,img,real   
-		    ;POP
+		    addps xmm3, xmm0   ;xmm3: 0.0,0.0,img,real   
 
 		    movdqu xmm0, xmm5
 		    psrldq xmm0, 4     ;phase[j+1]
-		    ;PUSH
 		    call cos
 		    mulss xmm0, xmm2
 		    pslldq xmm0, 8
-		    addps xmm3, xmm0   ;xmm2: 0.0, realj+1, imgj, realj
-		    ;POP
+		    addps xmm3, xmm0   ;xmm3: 0.0, realj+1, imgj, realj
 
 		    movdqu xmm0, xmm5
 		    psrldq xmm0, 4     ;phase[j+1]
-		    ;PUSH
 		    call sin
 		    mulss xmm0, xmm2
 		    pslldq xmm0, 8
-		    addps xmm3, xmm0   ;xmm2: imgj+1, realj+1, imgj, realj
-		    ;POP
+		    addps xmm3, xmm0   ;xmm3: imgj+1, realj+1, imgj, realj
 
-		    ;ya no necesito mas las normas
+		    pop j
+		    pop i
+		    POP16 f
+		    POP16 XMM2
 
-		    movdqu [s2+j*sizeof_complejo], xmm3
+		    ;ya no necesito mas las normas (xmm2)
+
+		    mov rax, [s2]
+		    movdqu [rax+j*sizeof_complejo], xmm3
 		    pxor xmm3, xmm3
-		    movdqu [s1+j*sizeof_complejo], xmm3
+		    mov rax, [s1]
+		    movdqu [rax+j*sizeof_complejo], xmm3
 			sub j, 2
 			jmp .ciclo_3
 		.fin_3:
 
-		;PUSH
-		mov rdi, s2
+		push i
+		sub rsp, 8
+		PUSH16 f
+		mov rdi, [s2]
 		mov rsi, window_size
-		mov rdx, s1
+		mov rdx, [s1]
 		call iditfft2
-		;POP
+		POP16 f
+		add rsp, 8
+		pop i
 
 		mov r10d, window_size
+		sub r10d, 4          ;trabaja de a 4 (C es de a 1)
 		;%define j r10d
 		.ciclo_4:
 			cmp j, 0
@@ -335,44 +402,54 @@ stretch_asm:
 			divss xmm2, f
 			cvtss2si r11d, xmm2  ;inicio
 
-			movdqu xmm3, [s1+j*sizeof_complejo]
+			mov rax, [s1]
+			movdqu xmm3, [rax+j*sizeof_complejo]
 			psllq xmm3, sizeof_float*8  ;me quedo solo con los reales
-			: xmm3: j+1real, 0, jreal, 0
-			movdqu xmm4, [hanning+j*sizeof_float]
-			pslldq xmm4, 2*sizeof_float ;me quedo solo con j y j+1
-			shufps xmm3, xmm3, 10001101b
-			mulps xmm3, xmm4
-
-			add r11d, j
-			movq [output+r11d*sizeof_float], xmm3
-
+			; xmm3: j+1real, 0, jreal, 0
 			add j, 2
-			jmp .ciclo_4
-		.fin_4:
+			movdqu xmm5, [rax+j*sizeof_complejo]
+			psllq xmm5, sizeof_float*8  ;me quedo solo con los reales
+			; xmm5: j+3real, 0, j+2real, 0
+			shufps xmm3, xmm5, 11011101b
+			; xmm3: j+3real, j+2real, j+1real, jreal
+			sub j, 2
+			mov rax, [hanning]
+			movdqu xmm4, [rax+j*sizeof_float]
+			mulps xmm3, xmm4   ;real*hanning
 
-		;CHEQUEAR
-		inc ecx
+			add r11d, j    ;inicio+j
+			mov rax, [output]
+			movq [rax+r11d*sizeof_float], xmm3
+
+			add j, 4
+			jmp .ciclo_4
+		
+		.fin_4:
+		mov rax, [fxhop]
+		sub i, rax
 		jmp .ciclo
 	
 	.fin:
 
-	;la pila entonces queda:
-	;%define output esp+16
-	;%define s2 esp+24
-	;%define s1 esp+32
-	;%define a2 esp+40
-	;%define a1 esp+48
-	;%define phase esp+56
-	;%define hanning esp+62
+	;la pila estaba asi:
+	;%define output rsp+16
+	;%define s2 rsp+24
+	;%define s1 rsp+32
+	;%define a2 rsp+40
+	;%define a1 rsp+48
+	;%define phase rsp+56
+	;%define hanning rsp+62
+	;y en rsp+70 mi xmm0
 
-	mov r15, output   ;tengo que guardarme este puntero
-	add esp, 16
-	add esp, 8        ;no tengo que hacerle free a output!
+	mov r15, [output]   ;tengo que guardarme este puntero
+	add rsp, 16
+	add rsp, 8        ;no tengo que hacerle free a output!
 	mov rcx, 6
 	.frees:
 	pop rax
 	call free
 	loop .frees
+	add rsp, 16
 	
 	mov rax, r15 
 
