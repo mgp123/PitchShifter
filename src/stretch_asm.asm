@@ -1,4 +1,4 @@
-section.data:
+section.data
 	align 16
 	;aca van las variables hardcodeadas
 	pi: times 1 dd 3.141592654
@@ -12,17 +12,14 @@ section.data:
 	%define off_real 0
 	%define off_img 4
 
-section.text:
+section.text
 	global stretch_asm
 	extern malloc
 	extern free
 	extern sin
-	extern cos
 	extern calloc
 	extern sqrt
 	extern atan2
-	extern ditfft2
-	extern iditfft2
 
 ;obs: push16 y pop16 no desalinean la pila porque son movimientos de 16 bytes
 %macro PUSH16 1
@@ -57,7 +54,7 @@ stretch_asm:
 	mov r12d, esi
 	movdqa xmm1, xmm0
 	mov r13d, edx
-	mov r14d, ecx
+	r14d, ecx
 
 	%define audio rbx
 	%define size r12d
@@ -75,39 +72,34 @@ stretch_asm:
 
 	push rax  
 	;rsp+8 tiene ahora phase
-	sub rsp, 8
-
 	xor rax, rax   ;para q no se rompa malloc (?)
-	mov edi, window_size
-	shl rdi, 2  ;window_size*sizeof_float 
+	mov edi, window_size*sizeof_float
+	sub rsp, 8
 	call malloc    ;no necesito q esté en 0
 
 	add rsp, 8
 	push rax       ;pila alineada
+
 	; Mi pila ahora:
 	; rsp+8: hanning (array de *windows_size* floats)
 	; rsp+16: phase (array de *windows_size* floats)
 
 	xor rax, rax
-	mov edi, window_size
-	shl rdi, 2
+	mov edi, window_size*sizeof_float
 	call malloc
 	push rax       ;a1 (pila desalineada)
 	xor rax, rax
-	mov edi, window_size
-	shl rdi, 2
+	mov edi, window_size*sizeof_float
 	sub rsp, 8
 	call malloc
 	add rsp, 8
 	push rax       ;a2 (pila alineada)
 	xor rax, rax
-	mov edi, window_size
-	shl rdi, 2
+	mov edi, window_size*sizeof_float*2
 	call malloc
 	push rax       ;s1 (pila desalineada)
 	xor rax, rax
-	mov edi, window_size
-	shl rdi, 2
+	mov edi, window_size*sizeof_float*2
 	sub rsp, 8
 	call malloc
 	add rsp, 8
@@ -143,11 +135,10 @@ stretch_asm:
 	dec ecx
 	.init_hanning:
 		cmp ecx, 0
-		jl .fin_h
+		jl .fin
 		movss xmm0, [pi]
-		cvtsi2ss xmm3, ecx
-		mulss xmm0, xmm3  ;pi*i
-		divss xmm0, xmm2  ;/window_size-1
+		mulss xmm0, ecx  ;pi*i
+		divss xmm0, xmm2
 		cvtss2sd xmm0, xmm0
 		
 		PUSH16 f
@@ -163,10 +154,10 @@ stretch_asm:
 		cvtsd2ss xmm0, xmm0
 		mulss xmm0, xmm0
 		mov rax, [hanning]
-		movss [rax+rcx*sizeof_float], xmm0
+		movss [rax+ecx*sizeof_float], xmm0
 		dec ecx
 
-	.fin_h:
+	.fin:
 	;necesito:
 	; size-window_size-hop
 	; f*hop
@@ -177,34 +168,34 @@ stretch_asm:
 	cvtsi2ss xmm3, hop
 	mulss xmm3, f   
 	cvtss2si eax, xmm3     
-	mov [rsp+70], eax
-	%define fxhop rsp+70  
+	movdqu [rsp+70], eax
+	%define fxhop, rsp+70  
 
-	%define i rcx
+	%define i ecx
 	.ciclo:
 		cmp i, 0
 		je .fin
 		mov r10d, window_size
 		dec r10d
-		%define j r10
+		%define j r10d
 		.ciclo_a:
 			cmp j, 0
 			jl .fin_a
-			mov r11, i
-			add r11, j
-			movdqu xmm4, [audio+r11*sizeof_float]
+			mov r11d, i
+			add r11d, j
+			movdqu xmm4, [audio+r11d*sizeof_float]
 			mov rax, [hanning]
 			mulps xmm4, [rax+j*sizeof_float]
 			mov rax, [a1]
 			movdqu [rax+j*sizeof_float], xmm4
 			add r11d, hop
-			movdqu xmm4, [audio+r11*sizeof_float]
+			movdqu xmm4, [audio+r11d*sizeof_float]
 			mov rax, [hanning]
 			mulps xmm4, [rax+j*sizeof_float]
 			mov rax, [a2]
 			movdqu [rax+j*sizeof_float], xmm4
-			add j, 4
-			sub j, 4
+			add r10, 4
+			dec r10d, 4
 			jmp .ciclo_a
 
 		.fin_a:
@@ -224,8 +215,8 @@ stretch_asm:
 		add rsp, 8
 		pop i
 
-		mov r10d, window_size
-		;%define j r10
+		mov window_size r10d
+		;%define j r10d
 		sub j, 2    ;mi ciclo hace de a 2 (la de C es de a 1)
 					;window_size es potencia de 2 asi que anda
 		.ciclo_3:
@@ -251,7 +242,7 @@ stretch_asm:
 		    addps xmm2, xmm3  ; basura, norma**2 j+1, basura, norma**2 j
 		    psllq xmm2, 8*sizeof_float
 		    psrlq xmm2, 8*sizeof_float
-		    sqrtps xmm2, xmm2
+		    sqrtps xmm2
 		    ; DEBO PRESERVAR XMM2 HASTA MAS ABAJO (tiene las normas)
 
 		    mulps xmm5, xmm4
@@ -321,7 +312,7 @@ stretch_asm:
 		    .compare_pi_great:
 		    movdqu xmm4, xmm5
 		    movdqu xmm7, [_pi_mask]
-		    cmpps xmm4, xmm7, 0xE   ;phase... > pi?
+		    cmpps xmm4, xmm7, EH   ;phase... > pi?
 		    psrld xmm4, 31         ;si la rta era 11111 me queda un uno
 		    cvtdq2ps xmm4, xmm4
 		    mulps xmm4, xmm7       
@@ -393,7 +384,7 @@ stretch_asm:
 		sub rsp, 8
 		PUSH16 f
 		mov rdi, [s2]
-		mov esi, window_size
+		mov rsi, window_size
 		mov rdx, [s1]
 		call iditfft2
 		POP16 f
@@ -401,13 +392,13 @@ stretch_asm:
 		pop i
 
 		mov r10d, window_size
-		sub r10, 4          ;trabaja de a 4 (C es de a 1)
-		;%define j r10
+		sub r10d, 4          ;trabaja de a 4 (C es de a 1)
+		;%define j r10d
 		.ciclo_4:
 			cmp j, 0
 			jl .fin_4
 			pxor xmm2, xmm2
-			cvtsi2ss xmm2, ecx ;ecx=i 
+			cvtsi2ss xmm2, i
 			divss xmm2, f
 			cvtss2si r11d, xmm2  ;inicio
 
@@ -426,9 +417,9 @@ stretch_asm:
 			movdqu xmm4, [rax+j*sizeof_float]
 			mulps xmm3, xmm4   ;real*hanning
 
-			add r11, j    ;inicio+j
+			add r11d, j    ;inicio+j
 			mov rax, [output]
-			movq [rax+r11*sizeof_float], xmm3
+			movq [rax+r11d*sizeof_float], xmm3
 
 			add j, 4
 			jmp .ciclo_4
