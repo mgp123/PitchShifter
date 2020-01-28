@@ -101,12 +101,12 @@ stretch_asm:
 	push rax       ;a2 (pila alineada)     +32
 	xor rax, rax
 	mov edi, window_size
-	shl rdi, 2
+	shl rdi, 4 ;sizeof_complejo
 	call malloc
 	push rax       ;s1 (pila desalineada)  +40
 	xor rax, rax
 	mov edi, window_size
-	shl rdi, 2
+	shl rdi, 4 ;sizeof_complejo
 	sub rsp, 8
 	call malloc
 	add rsp, 8
@@ -142,7 +142,7 @@ stretch_asm:
 
 	;necesito window_size-1 para la sgte parte (tenia window_size en xmm2)
 	movdqu xmm5, [_uno] 
-	subss xmm2, xmm5      ;chequear que esto ande
+	subss xmm2, xmm5    
 
 	mov ecx, window_size  ;i
 	dec ecx
@@ -186,11 +186,13 @@ stretch_asm:
 	cvtss2si eax, xmm3     
 	mov [espacio], rax
 	%define fxhop rsp+64  
+	;hay q restarle a i por la naturaleza de los ciclos en asm
+	sub rcx, rax
 
 	%define i rcx
 	.ciclo:
 		cmp i, 0
-		je .fin
+		jl .fin
 		mov r10d, window_size
 		sub r10d, 4
 		%define j r10
@@ -218,7 +220,7 @@ stretch_asm:
 		mov rdi, [a1]
 		mov esi, window_size
 		mov rdx, [s1]
-		
+
 		push i
 		sub rsp, 8
 		PUSH16 f
@@ -243,6 +245,7 @@ stretch_asm:
 		;%define j r10
 		sub j, 2    ;mi ciclo hace de a 2 (la de C es de a 1)
 					;window_size es potencia de 2 asi que anda
+
 		.ciclo_3:
 			cmp j, 0
 			jl .fin_3
@@ -309,7 +312,7 @@ stretch_asm:
 		    movdqa xmm0, xmm5
 		    psrldq xmm0, 4     ;frac.imaginaria (j+1)
 		    movdqa xmm1, xmm5
-		    pslldq xmm1, 12
+		    pslldq xmm1, 12	
 		    psrldq xmm1, 12    ;frac.real (j+1)
 		    call atan2
 		    movdqa xmm5, xmm0
@@ -319,6 +322,10 @@ stretch_asm:
 	 		POP16 f
 	 		pop j
 	 		pop i
+
+
+;
+
 
 		    cvtpd2ps xmm5, xmm5 ;v_angular j float
 		    cvtpd2ps xmm6, xmm6 ;v_angular j+1 float
@@ -343,7 +350,7 @@ stretch_asm:
 		    mulps xmm4, xmm7  
 		    movdqu xmm3, [_dos]      
 		    mulps xmm4, xmm3   ;entonces si era mayor a pi, le resto dos pi
-		    ;me falta chequear si era menor a pi antes de modificar
+		    ;me falta chequear si era menor a pi antes de modificar:
 		    movdqu xmm6, xmm5
 		    cmpps xmm6, xmm7, 1H   ;phase... < pi?
 		    psrld xmm6, 31         ;si la rta era 11111 me queda un uno
@@ -352,8 +359,7 @@ stretch_asm:
 		    mulps xmm6, xmm3   ;entonces si era mayor a pi, le sumo dos pi
 
 		    subps xmm6, xmm4
-		    addps xmm5, xmm6     ; 0.0, 0.0, phase[j+1], phase[j]
-
+		    addps xmm5, xmm6     ; 0.0, 0.0, phase[j+1], phase[j]    
 
 		    .rephased:
 		    PUSH16 XMM2
@@ -397,15 +403,18 @@ stretch_asm:
 
 		    ;ya no necesito mas las normas (xmm2)
 
+		    .corrupcion:
 		    mov rax, [s2]
 		    movdqu [rax+j*sizeof_complejo], xmm3
 		    pxor xmm3, xmm3
 		    mov rax, [s1]
 		    movdqu [rax+j*sizeof_complejo], xmm3
 			sub j, 2
+			
 			jmp .ciclo_3
-		.fin_3:
 
+
+		.fin_3:
 		mov rdi, [s2]
 		mov esi, window_size
 		mov rdx, [s1]
