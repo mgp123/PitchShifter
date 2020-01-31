@@ -2,8 +2,9 @@ section.data:
 	align 16
 	;aca van las variables hardcodeadas
 	pi: times 1 dd 3.141592654
-	_pi_mask: dd 0.0,0.0, 3.141592654, 3.141592654
-	_pi_negmask: dd 0.0,0.0, -3.141592654, -3.141592654
+	_pi_mask: dd 3.141592654, 3.141592654, 0.0, 0.0
+	_pi_negmask: dd -3.141592654, -3.141592654, 0.0, 0.0
+	_negmask: dd -1.0, -1.0, -1.0, -1.0
 	_dos: times 4 dd 2.0
 	_uno: times 1 dd 1.0
 	_mask: dd 1.0, 1.0, -1.0, -1.0
@@ -72,6 +73,7 @@ stretch_asm:
 	mov rsi, sizeof_float
 	PUSH16 f       ;lo dejamos abajo de todos los push que vamos a hacer ahora
 	call calloc    ;lo inicializo en ceros
+
 	push rax  	   ;phase en [rsp]
 
 	xor rax, rax   ;para q no se rompa malloc (?)
@@ -155,6 +157,7 @@ stretch_asm:
 		divss xmm0, xmm2  ;/window_size-1
 		cvtss2sd xmm0, xmm0
 		
+		PUSH16 xmm2
 		PUSH16 f
 		push rcx
 		sub rsp, 8
@@ -164,6 +167,7 @@ stretch_asm:
 		add rsp, 8
 		pop rcx
 		POP16 f
+		POP16 xmm2
 
 		cvtsd2ss xmm0, xmm0
 		mulss xmm0, xmm0
@@ -259,7 +263,7 @@ stretch_asm:
 		    movdqu xmm5, [rax+j*sizeof_complejo]
 		    ; xmm5: s2[j+1].img, s2[j+1].real, s2[j].img, s2[j].real
 		    pshufd xmm6, xmm5, 10110001b
-		    ; s2[j+1].real, s2[j+1].img, s2[j].real, s2[j].img
+		    ; xmm6: s2[j+1].real, s2[j+1].img, s2[j].real, s2[j].img
 
 		    ; aprovecho acá para conseguir normas2
 		    movdqu xmm2, xmm6
@@ -269,7 +273,7 @@ stretch_asm:
 		    addps xmm2, xmm3  ; basura, norma**2 j+1, basura, norma**2 j
 		    psllq xmm2, 8*sizeof_float
 		    psrlq xmm2, 8*sizeof_float
-		    sqrtps xmm2, xmm2
+		    sqrtps xmm2, xmm2    ; 0, normaj+1, 0, normaj
 		    ; DEBO PRESERVAR XMM2 HASTA MAS ABAJO (tiene las normas)
 
 		    mulps xmm5, xmm4
@@ -288,10 +292,12 @@ stretch_asm:
 		    ; xmm4: frac[j+1].img, frac[j].img, frac[j+1].real, frac[j].real
 		    shufps xmm4, xmm4, 11011000b
 		    ; xmm4: frac(j+1).img, frac(j+1).real, frac(j).img, frac(j).real
-		    cvtps2pd xmm5, xmm4  ;j
+		    cvtps2pd xmm5, xmm4  ;j.img, j.real (DOUBLE)
 		    psrldq xmm4, 8
-		    cvtps2pd xmm6, xmm4  ;j+1
+		    cvtps2pd xmm6, xmm4  ;j+1.img, j+1.real (DOUBLE)
 
+
+		    .frac_calculadas:
 		    ;hacer cosas de push y demas (ecx, r10, los xmm)
 		    ;PUSH
 		    push i
@@ -301,44 +307,44 @@ stretch_asm:
 		    PUSH16 XMM5
 
 		    movdqa xmm0, xmm6
-		    psrldq xmm0, 4     ;frac.imaginaria (j)
+		    psrldq xmm0, 8     ;frac.imaginaria (j)
 		    movdqa xmm1, xmm6
-		    pslldq xmm1, 12
-		    psrldq xmm1, 12    ;frac.real (j)
+		    pslldq xmm1, 8
+		    psrldq xmm1, 8    ;frac.real (j)
 		    call atan2
-		    movdqa xmm6, xmm0
+		    cvtsd2ss xmm6, xmm0
 		    POP16 XMM5
 		    PUSH16 XMM6
 		    movdqa xmm0, xmm5
-		    psrldq xmm0, 4     ;frac.imaginaria (j+1)
+		    psrldq xmm0, 8     ;frac.imaginaria (j+1)
 		    movdqa xmm1, xmm5
-		    pslldq xmm1, 12	
-		    psrldq xmm1, 12    ;frac.real (j+1)
+		    pslldq xmm1, 8	
+		    psrldq xmm1, 8    ;frac.real (j+1)
 		    call atan2
-		    movdqa xmm5, xmm0
-	 		
+		    cvtsd2ss xmm5, xmm0
+
 	 		POP16 XMM6
 	 		POP16 XMM2
 	 		POP16 f
 	 		pop j
 	 		pop i
 
+	 		.v_ang:
 
-;
-
-
-		    cvtpd2ps xmm5, xmm5 ;v_angular j float
-		    cvtpd2ps xmm6, xmm6 ;v_angular j+1 float
+		    ;xmm5: v_angular j float
+		    ;xmm6: v_angular j+1 float
 		    divss xmm5, f
 		    divss xmm6, f
-		    psrldq xmm5, 12   
-		    pslldq xmm5, 12		
+		    pslldq xmm5, 12   
+		    psrldq xmm5, 12		
 		    pslldq xmm6, 4
-		    addps xmm5, xmm6    
+		    addps xmm5, xmm6  ;0,0,v_ang/f j+1, v_ang/f j    
 		    pxor xmm6, xmm6
+
 		    mov rax, [phase]
-		    movq xmm6, [rax+j*sizeof_float]
-		    addps xmm5, xmm6 
+		    movq xmm6, [rax+j*sizeof_float]  ;bajo phase viejo
+		    addps xmm5, xmm6   ;le sumo el phase viejo
+
 		    ; xmm5: 0,0, phase[j+1]+v_angular/f, phase[j]+v_angular/f 
 
 		    .compare_pi_great:
@@ -350,65 +356,102 @@ stretch_asm:
 		    mulps xmm4, xmm7  
 		    movdqu xmm3, [_dos]      
 		    mulps xmm4, xmm3   ;entonces si era mayor a pi, le resto dos pi
-		    ;me falta chequear si era menor a pi antes de modificar:
+
+		    ;me falta chequear si era menor a -pi antes de modificar:
 		    movdqu xmm6, xmm5
-		    cmpps xmm6, xmm7, 1H   ;phase... < pi?
+		    movdqu xmm3, [_negmask]
+		    mulps xmm7, xmm3  ;chequear q ande
+		    cmpps xmm6, xmm7, 1H   ;phase... < -pi?
 		    psrld xmm6, 31         ;si la rta era 11111 me queda un uno
 		    cvtdq2ps xmm6, xmm6
-		    mulps xmm6, xmm7       
+		    mulps xmm7, xmm3
+		    mulps xmm6, xmm7   ;me queda pi donde tenga q sumarlo   
+		    movdqu xmm3, [_dos]
 		    mulps xmm6, xmm3   ;entonces si era mayor a pi, le sumo dos pi
 
 		    subps xmm6, xmm4
 		    addps xmm5, xmm6     ; 0.0, 0.0, phase[j+1], phase[j]    
 
+		    .nuevo:
+		    mov rax, [phase]
+		    movq [rax+j*sizeof_float], xmm5 ;guardo nuevos phase
+		    
 		    .rephased:
-		    PUSH16 XMM2
+		    ;xmm5: 0,0,phase[j+1],phase[j]
 		    PUSH16 f
 		    push i
 		    push j
 
-		    movdqu xmm0, xmm5
-		    pslldq xmm0, 12
-		    psrldq xmm0, 12    ;phase[j]
+		    PUSH16 XMM5
+		    PUSH16 XMM2
+
+		    cvtss2sd xmm0, xmm5 ;phase[j]
 		    call cos
-		    mulss xmm0, xmm2
+		    cvtsd2ss xmm0, xmm0
+		    POP16 XMM2
+		    mulss xmm0, xmm2 ;*normaj
+		    pslldq xmm0, 12
+		    psrldq xmm0, 12
 		    movdqu xmm3, xmm0
+		    POP16 XMM5
+		    PUSH16 XMM5
+		    PUSH16 XMM3
+		    PUSH16 XMM2
 
-		    movdqu xmm0, xmm5
+		    cvtss2sd xmm0, xmm5 ;phase[j]
+		    call sin
+		    cvtsd2ss xmm0, xmm0
+		    POP16 XMM2
+			mulss xmm0, xmm2  ;*normaj
 		    pslldq xmm0, 12
-		    psrldq xmm0, 12    ;phase[j]
-		    call sin
-			mulss xmm0, xmm2
-		    pslldq xmm0, 4
+		    psrldq xmm0, 8
+		    POP16 XMM3
 		    addps xmm3, xmm0   ;xmm3: 0.0,0.0,img,real   
+		    POP16 XMM5
+		    PUSH16 XMM5  ;la voy despues del prox call
+		    PUSH16 XMM3
+		    PUSH16 XMM2
 
-		    movdqu xmm0, xmm5
-		    psrldq xmm0, 4     ;phase[j+1]
+		    ;ya no necesito mas phase[j]
+		    psrldq xmm5, 4 ;phase[j+1]
+
+		    cvtss2sd xmm0, xmm5 ;phase[j+1]
 		    call cos
+		    cvtsd2ss xmm0, xmm0
+		    POP16 XMM2
+		    ;necesito *normaj+1
+		    psrldq xmm2, 8   ; 0,0,0,normaj+1
 		    mulss xmm0, xmm2
-		    pslldq xmm0, 8
+		    pslldq xmm0, 12
+		    psrldq xmm0, 4
+		    POP16 XMM3
 		    addps xmm3, xmm0   ;xmm3: 0.0, realj+1, imgj, realj
+		    POP16 XMM5
+		    PUSH16 XMM3
+		    PUSH16 XMM2
 
-		    movdqu xmm0, xmm5
-		    psrldq xmm0, 4     ;phase[j+1]
+		    cvtss2sd xmm0, xmm5 ;phase[j+1], ya no la voy a necesitar mas despues
 		    call sin
+		    cvtsd2ss xmm0, xmm0
+		    POP16 XMM2
 		    mulss xmm0, xmm2
-		    pslldq xmm0, 8
+		    pslldq xmm0, 12
+		    POP16 XMM3
 		    addps xmm3, xmm0   ;xmm3: imgj+1, realj+1, imgj, realj
 
 		    pop j
 		    pop i
 		    POP16 f
-		    POP16 XMM2
 
-		    ;ya no necesito mas las normas (xmm2)
+		    ;ya no necesito mas las normas (xmm2), ni xmm5
+		    ;todo quedó en xmm3
 
 		    .corrupcion:
 		    mov rax, [s2]
-		    movdqu [rax+j*sizeof_complejo], xmm3
+		    movdqu [rax+j*sizeof_complejo], xmm3  ;pongo los val en s2
 		    pxor xmm3, xmm3
 		    mov rax, [s1]
-		    movdqu [rax+j*sizeof_complejo], xmm3
+		    movdqu [rax+j*sizeof_complejo], xmm3  ;vacio s1 (para que..?)
 			sub j, 2
 			
 			jmp .ciclo_3
@@ -454,6 +497,7 @@ stretch_asm:
 
 			add r11, j    ;inicio+j
 			mov rax, [output]
+			.check:
 			movdqu [rax+r11*sizeof_float], xmm3
 
 			sub j, 4
