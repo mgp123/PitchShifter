@@ -77,8 +77,7 @@ stretch_asm:
 	push rax  	   ;phase en [rsp]
 
 	xor rax, rax   ;para q no se rompa malloc (?)
-	mov edi, window_size
-	shl rdi, 2     ;window_size*sizeof_float 
+	lea edi, [window_size*sizeof_float]
 	sub rsp, 8	   ;alineo para el call
 	call malloc    ;no necesito q esté en 0
 	add rsp, 8
@@ -90,25 +89,21 @@ stretch_asm:
 	; rsp+16: f
 
 	xor rax, rax
-	mov edi, window_size
-	shl rdi, 2
+	lea edi, [window_size*sizeof_float]
 	call malloc
 	push rax       ;a1 (pila desalineada)  +24
 	xor rax, rax
-	mov edi, window_size
-	shl rdi, 2
+	lea edi, [window_size*sizeof_float]
 	sub rsp, 8
 	call malloc
 	add rsp, 8
 	push rax       ;a2 (pila alineada)     +32
 	xor rax, rax
-	mov edi, window_size
-	shl rdi, 4 ;sizeof_complejo
+	lea edi, [window_size*sizeof_complejo]
 	call malloc
 	push rax       ;s1 (pila desalineada)  +40
 	xor rax, rax
-	mov edi, window_size
-	shl rdi, 4 ;sizeof_complejo
+	lea edi, [window_size*sizeof_complejo]
 	sub rsp, 8
 	call malloc
 	add rsp, 8
@@ -135,10 +130,10 @@ stretch_asm:
 	%define s1 rsp+24
 	%define a2 rsp+32
 	%define a1 rsp+40
-	%define phase rsp+48
-	%define hanning rsp+56
+	%define hanning rsp+48
+	%define phase rsp+56
 	%define espacio rsp+64
-	;en rsp+64 mi xmm0.... tengo que acomodar la pila cuando termina todo
+	;en rsp+64 mi xmm0/f.... tengo que acomodar la pila cuando termina todo
 
 	movdqu f, [espacio]   ;restauramos f definitivamente
 
@@ -469,6 +464,10 @@ stretch_asm:
 		add rsp, 8
 		pop i
 
+		.debug3:
+		mov rdi, [s1]
+		mov rsi, [s2]
+
 		mov r10d, window_size
 		sub r10, 4          ;trabaja de a 4 (C es de a 1)
 		;%define j r10
@@ -498,6 +497,8 @@ stretch_asm:
 			add r11, j    ;inicio+j
 			mov rax, [output]
 			.check:
+			movdqu xmm4, [rax+r11*sizeof_float]
+			addps xmm3, xmm4 
 			movdqu [rax+r11*sizeof_float], xmm3
 
 			sub j, 4
