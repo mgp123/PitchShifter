@@ -10,16 +10,27 @@ int main(int argc, char *argv[])
 	//unsigned int size_ir =  audio_in_info.frames;
 	//float* modulator = read_wav("sonidos/maca.wav");
 	//efecto_reverb(modulator,carrier, size_ir);
-	float* audio = read_wav("sonidos/bowie.wav");
+	float* audio = read_wav("sonidos/Maple.wav");
 	unsigned int size =  audio_in_info.frames;
-	float f = 1.5;
-	unsigned int window_size = 1024;
-	unsigned int hop = 32;
-	float* nuevo = stretch_asm(audio, size, f, window_size, hop);
+	float f = 0.75;
+	unsigned int window_size = 2048;
+	unsigned int hop = 256;
+	// 0 = false, 1 = true
+	int repit = 0;
+	int stre = 1;
+
+	if(repit)
+		printf("repitch... \n");
+		efecto_repitch(audio,size,f);
+	if(!repit && stre){
+		printf("stretch...\n");
+		float* nuevo = stretch(audio, size, f, window_size, hop);
+		save_wav_len("stretch.wav",nuevo, size/f + window_size);
+		free(nuevo);
+	}
+	free(audio);
+
 	//free(carrier);
 	//free(modulator);
-	save_wav_len("stretch.wav",nuevo, size/f + window_size);
-	free(audio);
-	free(nuevo);
 	return 0;
 }
