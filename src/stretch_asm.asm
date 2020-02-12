@@ -2,9 +2,8 @@ section.data:
 	align 16
 	;aca van las variables hardcodeadas
 	pi: times 1 dd 3.141592654
-	_pi_mask: dd 3.141592654, 3.141592654, 0.0, 0.0
-	_pi_negmask: dd -3.141592654, -3.141592654, 0.0, 0.0
-	_negmask: dd -1.0, -1.0, -1.0, -1.0
+	_dospi: dd 6.283185308
+	_dospi_mask: times 4 dd 6.283185308
 	_dos: times 4 dd 2.0
 	_uno: times 1 dd 1.0
 	_mask: dd 1.0, 1.0, -1.0, -1.0
@@ -116,7 +115,7 @@ stretch_asm:
 	divss xmm0, f
 	cvtsi2ss xmm2, window_size
 	addss xmm0, xmm2      ;size/f + window_size (nuevo_largo)
-	cvttss2si edi, xmm0
+	cvtss2si edi, xmm0
 	xor rsi, rsi
 	mov rsi, 4
 	call calloc
@@ -180,13 +179,17 @@ stretch_asm:
 	mov ecx, size
 	sub ecx, window_size
 	sub ecx, hop
-	cvtsi2ss xmm3, hop
-	mulss xmm3, f   
-	cvtss2si eax, xmm3     
-	mov [espacio], rax
-	%define fxhop rsp+64  
+
+	;======== obsoleto:
+	;cvtsi2ss xmm3, hop
+	;mulss xmm3, f   
+	;cvtss2si eax, xmm3     
+	;mov [espacio], rax
+	;%define fxhop rsp+64  
+	;========
+
 	;hay q restarle a i por la naturaleza de los ciclos en asm
-	sub rcx, rax
+	sub ecx, hop
 
 	%define i rcx
 	.ciclo:
@@ -324,50 +327,64 @@ stretch_asm:
 	 		pop j
 	 		pop i
 
-	 		.v_ang:
-
 		    ;xmm5: v_angular j float
 		    ;xmm6: v_angular j+1 float
-		    divss xmm5, f
-		    divss xmm6, f
+
+		    .omega:
+		    pxor xmm3, xmm3
+		    movd xmm3, [_dospi]
+		    cvtsi2ss xmm4, hop
+		    mulss xmm3, xmm4
+		    cvtsi2ss xmm4, j
+		    mulss xmm3, xmm4
+		    cvtsi2ss xmm4, window_size
+		    divss xmm3, xmm4	;xmm3: omega
+		    subss xmm5, xmm3   	;xmm5: v_angular j -omega
+		    subss xmm6, xmm3    ;xmm6: v_angular j+1 -omega
+
+		    ;xmm5: delta_phi j
+		    ;xmm6: delta_phi j+1
+
 		    pslldq xmm5, 12   
 		    psrldq xmm5, 12		
 		    pslldq xmm6, 4
-		    addps xmm5, xmm6  ;0,0,v_ang/f j+1, v_ang/f j    
-		    pxor xmm6, xmm6
+		    addps xmm5, xmm6  ;0,0,d_phi j+1, d_phi j    
+		    movdqu xmm6, [_dospi_mask]
+		    movdqu xmm4, xmm5
+		    
+		    .modulo:
+		    divps xmm4, xmm6
+		    ;no deberia redondear
+		    cvttps2dq xmm4, xmm4   ;convierto truncando
+		    cvtdq2ps xmm4, xmm4
+		    mulps xmm4, xmm6
+		    subps xmm5, xmm4 ; delta_phi % 2pi
+
+		    shufps xmm3, xmm3, 0 ;omega, omega, omega, omega
+		    addps xmm5, xmm3   ;d_phi + omega = d_phi(nuevo)
+
+		    movdqu xmm4, f
+		    shufps xmm4, xmm4, 0
+		    divps xmm5, xmm4    ;d_phi(nuevo)/f
+
+		    ;xmm5: basura, basura ,d_phi/f j+1, d_phi/f j  
 
 		    mov rax, [phase]
 		    movq xmm6, [rax+j*sizeof_float]  ;bajo phase viejo
 		    addps xmm5, xmm6   ;le sumo el phase viejo
 
-		    ; xmm5: 0,0, phase[j+1]+v_angular/f, phase[j]+v_angular/f 
-
-		    .compare_pi_great:
+		    .modulo_de_nuevo:
+		    movdqu xmm6, [_dospi_mask]
 		    movdqu xmm4, xmm5
-		    movdqu xmm7, [_pi_mask]
-		    cmpps xmm4, xmm7, 0xE   ;phase... > pi?
-		    psrld xmm4, 31         ;si la rta era 11111 me queda un uno
+		    divps xmm4, xmm6
+		    cvttps2dq xmm4, xmm4   ;convierto a int truncando
 		    cvtdq2ps xmm4, xmm4
-		    mulps xmm4, xmm7  
-		    movdqu xmm3, [_dos]      
-		    mulps xmm4, xmm3   ;entonces si era mayor a pi, le resto dos pi
+		    mulps xmm4, xmm6
+		    subps xmm5, xmm4 ; phase % 2pi
+		    pslldq xmm5, 8
+		    psrldq xmm5, 8   ; limpio los dos de arriba
 
-		    ;me falta chequear si era menor a -pi antes de modificar:
-		    movdqu xmm6, xmm5
-		    movdqu xmm3, [_negmask]
-		    mulps xmm7, xmm3  ;chequear q ande
-		    cmpps xmm6, xmm7, 1H   ;phase... < -pi?
-		    psrld xmm6, 31         ;si la rta era 11111 me queda un uno
-		    cvtdq2ps xmm6, xmm6
-		    mulps xmm7, xmm3
-		    mulps xmm6, xmm7   ;me queda pi donde tenga q sumarlo   
-		    movdqu xmm3, [_dos]
-		    mulps xmm6, xmm3   ;entonces si era mayor a pi, le sumo dos pi
-
-		    subps xmm6, xmm4
-		    addps xmm5, xmm6     ; 0.0, 0.0, phase[j+1], phase[j]    
-
-		    .nuevo:
+		    .bajo_a_mem:
 		    mov rax, [phase]
 		    movq [rax+j*sizeof_float], xmm5 ;guardo nuevos phase
 		    
@@ -505,7 +522,7 @@ stretch_asm:
 			jmp .ciclo_4
 		
 		.fin_4:
-		mov rax, [fxhop]
+		mov eax, hop
 		sub i, rax
 		jmp .ciclo
 	
