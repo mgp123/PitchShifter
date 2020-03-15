@@ -16,12 +16,12 @@ int main(int argc, char *argv[])
 	unsigned int window_size = 2048;
 	unsigned int hop = 256;
 	// 0 = false, 1 = true
-	int repit = 0;
-	int stre = 1;
+	int repit = 1;
+	int stre = 0;
 
 	if(repit)
 		printf("repitch... \n");
-		efecto_repitch(audio,size,f);
+		efecto_repitch_asm(audio,size,f);
 	if(!repit && stre){
 		printf("stretch...\n");
 		float* nuevo = stretch(audio, size, f, window_size, hop);

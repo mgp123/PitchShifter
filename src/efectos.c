@@ -155,7 +155,23 @@ void efecto_repitch(float* audio, unsigned int size, float f) {
 	temp = stretch(audio, audio_in_info.frames, 1./resample_coef, 2048,2048/16);
 	output = resample(temp, (unsigned int)  audio_in_info.frames*resample_coef,  resample_coef);
 
-	save_wav_len("repitch.wav",output,audio_in_info.frames);
+	save_wav_len("repitch_2.wav",output,audio_in_info.frames);
+
+	free(temp);
+	free(output);
+}
+
+
+void efecto_repitch_asm(float* audio, unsigned int size, float f) {
+	float*  temp;  
+	float* output;
+
+	float resample_coef = f;
+
+	temp = stretch_asm(audio, audio_in_info.frames, 1./resample_coef, 2048,2048/16);
+	output = resample_asm(temp, (unsigned int)  audio_in_info.frames*resample_coef,  resample_coef);
+
+	save_wav_len("repitch_asm_2.wav",output,audio_in_info.frames);
 
 	free(temp);
 	free(output);
@@ -177,6 +193,14 @@ void efecto_vocoder(float* modulator, float* carrier, unsigned int window_size) 
 	free(ref);
 }
 
+
+void precalcular_hanning(float* hanning, unsigned int window_size) {
+	for (int i = 0; i < window_size; ++i)
+	{
+		hanning[i] = (float) sin((M_PI*i)/(window_size-1));
+		hanning[i] *= hanning[i];
+	}
+}
 
 void vocoder(float* modulator, float* carrier, unsigned int window_size, float* output, unsigned int size) {
 	float hanning[window_size];
@@ -202,12 +226,4 @@ void vocoder(float* modulator, float* carrier, unsigned int window_size, float* 
 			output[i+j] += F1[j].real*hanning[j];
 		}
 	}	
-}
-
-void precalcular_hanning(float* hanning, unsigned int window_size) {
-	for (int i = 0; i < window_size; ++i)
-	{
-		hanning[i] = (float) sin((M_PI*i)/(window_size-1));
-		hanning[i] *= hanning[i];
-	}
 }

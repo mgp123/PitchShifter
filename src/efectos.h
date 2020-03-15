@@ -32,6 +32,7 @@ extern float* resample_asm(float* audio, int size, float f);
 // genera el audio con el efecto de repitch multiplicando las frecuencias por f.
 // utiliza strech y resample
 void efecto_repitch(float* audio, unsigned int size, float f);
+void efecto_repitch_asm(float* audio, unsigned int size, float f);
 
 // coloca en el buffer la funcion de hanning para ese size. 
 //Para cosas con overlap
