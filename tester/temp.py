@@ -134,3 +134,63 @@ plt.xlabel("coeficiente de resample")
 plt.ylabel("ciclos")
 plt.tight_layout()
 plt.show()
+
+
+# data variando el tamaño del audio en stretch
+# f : 0.5
+# window_size : 2048
+# hop : 128
+data = np.loadtxt("stretch_audio_size.txt")
+x = np.arange(25)*2048*10 + 2*2048
+
+plt.plot(x, data[0], label = "O0")
+plt.plot(x, data[1], label = "01")
+plt.plot(x, data[2], label = "02")
+plt.plot(x, data[3], label = "O3")
+plt.plot(x, data[4], label = "asm")
+
+plt.legend()
+plt.xlabel("size") 
+plt.ylabel("ciclos")
+plt.tight_layout()
+plt.show()
+
+
+# data variando el f  en stretch
+# size : 250*1024
+# window_size : 2048
+# hop : 128
+data = np.loadtxt("stretch_f.txt")
+x = (np.arange(10)*1.0 + 1)/5.0
+
+plt.plot(x, data[0], label = "O0")
+plt.plot(x, data[1], label = "01")
+plt.plot(x, data[2], label = "02")
+plt.plot(x, data[3], label = "O3")
+plt.plot(x, data[4], label = "asm")
+
+plt.legend()
+plt.xlabel("f") 
+plt.ylabel("ciclos")
+plt.tight_layout()
+plt.show()
+
+
+# data variando el hop  en stretch
+# size : 250*1024
+# window_size : 2048
+# f : 0.5
+data = np.loadtxt("stretch_hop.txt")
+x = ((np.arange(20)+ 1) * 2048)/20
+
+plt.plot(x, data[0], label = "O0")
+plt.plot(x, data[1], label = "01")
+plt.plot(x, data[2], label = "02")
+plt.plot(x, data[3], label = "O3")
+plt.plot(x, data[4], label = "asm")
+
+plt.legend()
+plt.xlabel("hop") 
+plt.ylabel("ciclos")
+plt.tight_layout()
+plt.show()
