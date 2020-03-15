@@ -8,7 +8,7 @@ TEST_C = $(wildcard tester/*.c)
 
 main: ${ASM} src/*.c src/*.h 
 	make ${ASM_O}
-	gcc src/*.c src/*.h src/*.o -o main -lsndfile -lm
+	gcc src/*.c src/*.h src/*.o -o main -lsndfile -lm -no-pie
 
 %.o: %.asm
 	nasm -f elf64 $<
