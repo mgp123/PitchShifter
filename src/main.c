@@ -14,7 +14,6 @@ int main(int argc, char *argv[])
 	}
 
 	if (strcmp(argv[1], "stretch") == 0) {
-		// llamado sin ajustar parametros
 		if (argc >= 4) {
 			float* audio = read_wav(argv[2]);
 			unsigned int size =  audio_in_info.frames;
@@ -117,7 +116,7 @@ int main(int argc, char *argv[])
 			return 0;
 		}
 
-		unsigned int window_size;
+		unsigned int window_size = 2048;
 
 		if (argc > 4)
 		{
@@ -170,7 +169,7 @@ void help() {
 	printf("	./main stretch mi_audio.wav 0.75 2048 512\n");
 	printf("\n");
 
-	printf("repitch: escaña el tono del audio con el float pasado por parametro.\n");
+	printf("repitch: escala el tono del audio con el float pasado por parametro.\n");
 	printf("	./main repitch <audio> <float> \n");
 	printf("	./main repitch mi_audio.wav 0.5  	(una octava mas grave) \n");
 	printf("\n");
