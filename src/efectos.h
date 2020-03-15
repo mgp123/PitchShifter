@@ -15,6 +15,8 @@ void efecto_vocoder(float* modulator, float* carrier, unsigned int window_size);
 void vocoder(float* modulator, float* carrier, unsigned int window_size, float* buffer, unsigned int size);
 extern void vocoder_asm(float* modulator, float* carrier, unsigned int window_size, float* buffer, unsigned int size);
 
+
+void efecto_stretch(float* audio, float f, unsigned int window_size, unsigned int hop);
 // devuelve el audio cambiando la duracion por size/f pero manteniendo la frecuencia
 // devuelve en el heap
 float* stretch(float* audio, unsigned int size, float f, unsigned int window_size, unsigned int hop);
@@ -31,8 +33,7 @@ extern float* resample_asm(float* audio, int size, float f);
 
 // genera el audio con el efecto de repitch multiplicando las frecuencias por f.
 // utiliza strech y resample
-void efecto_repitch(float* audio, unsigned int size, float f);
-void efecto_repitch_asm(float* audio, unsigned int size, float f);
+void efecto_repitch(float* audio, float f);
 
 // coloca en el buffer la funcion de hanning para ese size. 
 //Para cosas con overlap
