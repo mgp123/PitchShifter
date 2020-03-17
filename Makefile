@@ -1,5 +1,5 @@
 
-.PHONY:tester test_target
+.PHONY:tester test_target install
 ASM = $(wildcard src/*.asm)
 ASM_O = $(ASM:.asm=.o)
 
@@ -24,3 +24,6 @@ TEST_TARGET = "none"
 TEST_NAME = $(TEST_TARGET:tester/%.c=%)
 test_target: $(TEST_TARGET) ${ASM} ${TESTER_C_FILES} src/*.h 
 	gcc $(TEST_TARGET) ${TESTER_C_FILES}  src/*.h src/*.o -o $(TEST_NAME) -lsndfile -lm
+
+install:
+	@ sudo apt-get install libsndfile-dev
