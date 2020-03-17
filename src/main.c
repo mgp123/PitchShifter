@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
 			return 0;
 		}
 
-		float f = atof(argv[4]);
+		float f = atof(argv[3]);
 
 		efecto_repitch(audio,f);
 		free(audio);
