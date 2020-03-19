@@ -23,15 +23,29 @@ float* read_wav(char* path) {
 
 void save_wav(char* name, float* audio) {
 	int size = audio_in_info.frames*audio_in_info.channels;
-
-	audio_out_info = audio_in_info;
-	audio_out = sf_open(name, SFM_WRITE, &audio_out_info);
-	sf_write_float(audio_out, audio, size);
-	sf_close(audio_out);
+	save_wav_len(name, audio, size);
 }
 
 
 void save_wav_len(char* name, float* audio, unsigned int size) {
+
+	// sndfile toma floats en el rango [-1 : 1] por lo que se normaliza a eso.
+
+	float max = 0;
+	for (int i = 0; i < size; ++i)
+	{
+		float current = audio[i];
+		if (current < 0.0) { current = current*(-1.0);}
+		if (current > max) { max = current; }
+	}
+
+	if (max > 1.0) {
+		for (int i = 0; i < size; ++i)
+		{
+		audio[i] /= max;
+		}
+	}
+
 	audio_out_info = audio_in_info;
 	audio_out = sf_open(name, SFM_WRITE, &audio_out_info);
 	sf_write_float(audio_out, audio, size);
