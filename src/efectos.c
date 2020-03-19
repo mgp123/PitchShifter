@@ -53,6 +53,7 @@ float* stretch(float* audio, unsigned int size, float f, unsigned int window_siz
 
 	for (int i = 0; i < window_size; ++i)
 	{
+		//innit_hanning en asm
 		phase[i] = 0;
 
 		hanning[i] = (float) sin((M_PI*i)/(window_size-1));
@@ -61,10 +62,12 @@ float* stretch(float* audio, unsigned int size, float f, unsigned int window_siz
 
 	for (unsigned int i = 0; i < size - window_size - hop; i+=hop)
 	{
+		//etiqueta "ciclo" en asm
 		float a1[window_size];
 		float a2[window_size];
 		for (int j = 0; j < window_size; ++j)
 		{
+			//ciclo_a en asm
 			a1[j] = audio[i+j]*hanning[j];
 			a2[j] = audio[i+hop+j]*hanning[j];
 		}
@@ -77,7 +80,7 @@ float* stretch(float* audio, unsigned int size, float f, unsigned int window_siz
 
 		for (int j = 0; j < window_size; ++j)
 		{
-
+			//ciclo_3 en asm
 			float normas2 = sqrt(s2[j].real*s2[j].real + s2[j].imaginaria*s2[j].imaginaria);
 
 			complejo frac;
@@ -110,6 +113,7 @@ float* stretch(float* audio, unsigned int size, float f, unsigned int window_siz
 
 		for (int j = 0; j < window_size; ++j)
 		{
+			//ciclo_4 en asm
 			unsigned int inicio = (unsigned int) (i/f);
 			output[inicio+j] += s1[j].real*hanning[j];
 		}

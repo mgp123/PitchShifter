@@ -67,7 +67,7 @@ stretch_asm:
 	%define hop r14d
 
 	; Hago todos los pedidos de memoria que necesitaré:
-	xor rax, rax   ;para q no se rompa malloc (?)
+	xor rax, rax   
 	xor rdi, rdi
 	mov edi, window_size
 	mov rsi, sizeof_float
@@ -76,10 +76,10 @@ stretch_asm:
 
 	push rax  	   ;phase en [rsp]
 
-	xor rax, rax   ;para q no se rompa malloc (?)
+	xor rax, rax   
 	lea edi, [window_size*sizeof_float]
 	sub rsp, 8	   ;alineo para el call
-	call malloc    ;no necesito q esté en 0
+	call malloc    ;no necesito q esté inicializado en 0s
 	add rsp, 8
 	push rax       ;pila alineada
 	
@@ -133,7 +133,7 @@ stretch_asm:
 	%define hanning rsp+48
 	%define phase rsp+56
 	%define espacio rsp+64
-	;en rsp+64 mi xmm0/f.... tengo que acomodar la pila cuando termina todo
+	;en rsp+64 mi xmm0 (f).... tengo que acomodar la pila cuando termina todo
 
 	movdqu f, [espacio]   ;restauramos f definitivamente
 
@@ -173,9 +173,6 @@ stretch_asm:
 		jmp .init_hanning
 
 	.fin_h:
-	;necesito:
-	; size-window_size-hop
-	; f*hop
 
 	xor rcx, rcx
     %define i rcx
@@ -194,12 +191,16 @@ stretch_asm:
 			jl .fin_a
 			mov r11, i
 			add r11, j
-			movdqu xmm4, [audio+r11*sizeof_float]
 			mov rax, [hanning]
 			movdqa xmm5, [rax+j*sizeof_float]
-			mulps xmm4, xmm5
-			mov rax, [a1]
-			movdqu [rax+j*sizeof_float], xmm4
+			.primer_ciclo:
+				cmp i, 0
+				jne .no_primer
+				movdqu xmm4, [audio+r11*sizeof_float]
+				mulps xmm4, xmm5
+				mov rax, [a1]
+				movdqu [rax+j*sizeof_float], xmm4
+			.no_primer:
 			add r11d, hop
 			movdqu xmm4, [audio+r11*sizeof_float]
 			mulps xmm4, xmm5
@@ -237,14 +238,15 @@ stretch_asm:
 		mov r10d, window_size
 		%define j r10
 		sub j, 2    ;mi ciclo hace de a 2 (la de C es de a 1)
-					;window_size es potencia de 2 asi que anda
+					;window_size es potencia de 2 asi que no causa problemas
 
 		.ciclo_3:
 			cmp j, 0
 			jl .fin_3
 
 			mov rax, [s1]
-		    movdqu xmm4, [rax+j*sizeof_complejo]  ;el float mas bajo es la parte real de s1[j]
+		    movdqu xmm4, [rax+j*sizeof_complejo]  ;xmm4[0] es la parte real de s1[j]
+		    ; orden: xmm[3], xmm[2], xmm[1], xmm[0]
 		    ; xmm4: s1[j+1].img, s1[j+1].real, s1[j].img, s1[j].real
 		    mov rax, [s2]
 		    movdqu xmm5, [rax+j*sizeof_complejo]
@@ -524,6 +526,10 @@ stretch_asm:
 			jmp .ciclo_4
 		
 		.fin_4:
+		mov r10, [a1]  ;me guardo el puntero a a1
+		mov eax, [a2]  ;me guardo el puntero a a2
+		mov [a1], eax  ;el puntero a1 apunta al ex a2(uso este array en el prox ciclo)
+		mov [a2], r10  ;el puntero a2 apunta al ex a1(voy a pisar este array)
 		mov eax, hop
         add i, rax
         jmp .ciclo
