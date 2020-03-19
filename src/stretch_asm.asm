@@ -196,13 +196,13 @@ stretch_asm:
 			add r11, j
 			movdqu xmm4, [audio+r11*sizeof_float]
 			mov rax, [hanning]
-			mulps xmm4, [rax+j*sizeof_float]
+			movdqa xmm5, [rax+j*sizeof_float]
+			mulps xmm4, xmm5
 			mov rax, [a1]
 			movdqu [rax+j*sizeof_float], xmm4
 			add r11d, hop
 			movdqu xmm4, [audio+r11*sizeof_float]
-			mov rax, [hanning]
-			mulps xmm4, [rax+j*sizeof_float]
+			mulps xmm4, xmm5
 			mov rax, [a2]
 			movdqu [rax+j*sizeof_float], xmm4
 			sub j, 4
