@@ -19,6 +19,11 @@ int main(int argc, char *argv[])
 			unsigned int size =  audio_in_info.frames;
 			float f = atof(argv[3]);
 
+			if (audio == NULL)
+			{
+				return 0;
+			}
+
 			if (! mono()){
 				free(audio);
 				return 0;
@@ -60,6 +65,11 @@ int main(int argc, char *argv[])
 		float* ir = read_wav(argv[3]);
 		unsigned int ir_size =  audio_in_info.frames;
 
+		if (ir == NULL)
+		{
+			return 0;
+		}
+
 		if (! mono()){
 			free(ir);
 			return 0;
@@ -67,9 +77,14 @@ int main(int argc, char *argv[])
 
 		float* audio = read_wav(argv[2]);
 
-		if (! mono()){
+		if (audio == NULL) {
 			free(ir);
+			return 0;
+		}
+
+		if (! mono()){
 			free(audio);
+			free(ir);
 			return 0;
 		}
 
@@ -92,12 +107,24 @@ int main(int argc, char *argv[])
 		float* carrier = read_wav(argv[3]);
 		unsigned int carrier_size =  audio_in_info.frames;
 
+		if (carrier == NULL)
+		{
+			return 0;
+		}
+
 		if (! mono()){
 			free(carrier);
 			return 0;
 		}
 
 		float* modulator = read_wav(argv[2]);
+
+		if (modulator == NULL)
+		{
+			free(carrier);
+			return 0;
+		}
+
 		if (! mono()){
 			free(carrier);
 			free(modulator);
@@ -139,6 +166,12 @@ int main(int argc, char *argv[])
 		}
 
 		float* audio = read_wav(argv[2]);
+
+
+		if (audio == NULL ){
+			return 0;
+		}
+
 		if (! mono()){
 			free(audio);
 			return 0;

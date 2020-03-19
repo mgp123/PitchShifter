@@ -3,6 +3,11 @@
 float* read_wav(char* path) {
 	audio_in_info.format = 0;
 	audio_in = sf_open(path,SFM_READ,&audio_in_info);
+	if (audio_in == NULL)
+	{
+		printf("No se pudo abrir el archivo %s\n",path);
+		return NULL;
+	}
 
 	int size = audio_in_info.frames*audio_in_info.channels;    
 
