@@ -60,15 +60,21 @@ float* stretch(float* audio, unsigned int size, float f, unsigned int window_siz
 		hanning[i] *= hanning[i];
 	}
 
+	float* a1;
+	float arr1[window_size];
+	a1 = arr1;
+	float* a2;
+	float arr2[window_size];
+	a2 = arr2;
 	for (unsigned int i = 0; i < size - window_size - hop; i+=hop)
 	{
 		//etiqueta "ciclo" en asm
-		float a1[window_size];
-		float a2[window_size];
 		for (int j = 0; j < window_size; ++j)
 		{
 			//ciclo_a en asm
-			a1[j] = audio[i+j]*hanning[j];
+			if(i==0){
+				a1[j] = audio[i+j]*hanning[j];
+			}
 			a2[j] = audio[i+hop+j]*hanning[j];
 		}
 
@@ -117,6 +123,10 @@ float* stretch(float* audio, unsigned int size, float f, unsigned int window_siz
 			unsigned int inicio = (unsigned int) (i/f);
 			output[inicio+j] += s1[j].real*hanning[j];
 		}
+		float* temp;
+		temp = a1;
+		a1 = a2;
+		a2 = temp;
 	}
 
 	/*save_wav_len("stretched.wav",output,nuevo_largo);
@@ -156,7 +166,6 @@ void efecto_repitch(float* audio, float f) {
 	float* output;
 
 	float resample_coef = f;
-
 	temp = stretch_asm(audio, audio_in_info.frames, 1./resample_coef, 2048,2048/16);
 	output = resample_asm(temp, (unsigned int)  audio_in_info.frames*resample_coef,  resample_coef);
 
