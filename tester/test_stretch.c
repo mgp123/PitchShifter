@@ -120,7 +120,7 @@ void compC_hop() {
 		for (int j = 0; j < repeticiones; ++j)
 		{
 			MEDIR_TIEMPO_START(start);
-			stretch_asm(a,sizeA,f,window_size, hop);
+			stretch(a,sizeA,f,window_size, hop);
 			MEDIR_TIEMPO_STOP(end);
 			mean += end - start;
 		}
@@ -136,5 +136,7 @@ void compC_hop() {
 int main(int argc, char const *argv[])
 {
 	compC_hop();
+	compC_f();
+	compC_audio_size();
 	return 0;
 }
