@@ -143,11 +143,11 @@ int main(int argc, char *argv[])
 			return 0;
 		}
 
-		unsigned int window_size = 2048;
+		unsigned int window_size = 1024;
 
 		if (argc > 4)
 		{
-			window_size = atoi(argv[5]);
+			window_size = atoi(argv[4]);
 			// chequear potencia de 2
 		}
 
