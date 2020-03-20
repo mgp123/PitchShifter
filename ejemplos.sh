@@ -10,4 +10,4 @@ echo "== Creando ejemplo repitch =="
 echo "== Creando ejemplo reverb =="
 ./main reverb ./sonidos/beethoven_mono.wav ./impulse_response/ir1.wav
 echo "== Creando ejemplo vocoder =="
-echo "falta agregar ejemplo"
+./main vocoder sonidos/speech.wav sonidos/beethoven_carrier.wav 1024
